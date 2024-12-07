@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { nanoid } from 'nanoid';
+import { locations } from './locations.js';
 
 const app = express();
 const server = createServer(app);
@@ -9,13 +10,10 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-// Serve static files
 app.use(express.static('public'));
 
-// In-memory storage for rooms and players
 const rooms = {};
 
-// Generate a new room code
 const createRoom = () => {
     let code;
     do {
@@ -25,10 +23,7 @@ const createRoom = () => {
     return code;
 };
 
-// Handle socket connections
 io.on('connection', (socket) => {
-    console.log('New user connected:', socket.id);
-
     socket.on('create-room', (callback) => {
         const roomCode = createRoom();
         callback(roomCode);
@@ -50,12 +45,10 @@ io.on('connection', (socket) => {
 
     socket.on('start-game', ({ roomCode }) => {
         const room = rooms[roomCode];
-        if (!room || room.players.length < 3) {
+        if (!room || room.players.length < 1) {
             return io.to(socket.id).emit('error', 'Not enough players to start the game');
         }
 
-        // Assign spy and location
-        const locations = ['Beach', 'Airport', 'Theater', 'Restaurant', 'Hospital'];
         room.location = locations[Math.floor(Math.random() * locations.length)];
         const spyIndex = Math.floor(Math.random() * room.players.length);
         room.spy = room.players[spyIndex].id;
