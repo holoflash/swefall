@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spyfall</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        #game {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Spyfall</h1>
+    <div id="lobby">
+        <button id="create-room">Create Room</button>
+        <input id="room-code" placeholder="Room Code" />
+        <input id="username" placeholder="Your Name" />
+        <button id="join-room">Join Room</button>
+        <div id="error" style="color: red;"></div>
+    </div>
+    <div id="game">
+        <h2>Room: <span id="room-display"></span></h2>
+        <h3>Players:</h3>
+        <ul id="players"></ul>
+        <button id="start-game">Start Game</button>
+        <h3 id="role-display"></h3>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const lobby = document.getElementById('lobby');
+        const game = document.getElementById('game');
+        const errorDiv = document.getElementById('error');
+        const roomDisplay = document.getElementById('room-display');
+        const playersList = document.getElementById('players');
+        const roleDisplay = document.getElementById('role-display');
+
+        document.getElementById('create-room').onclick = () => {
+            socket.emit('create-room', (roomCode) => {
+                alert(`Room created: ${roomCode}`);
+                document.getElementById('room-code').value = roomCode;
+            });
+        };
+
+        document.getElementById('join-room').onclick = () => {
+            const roomCode = document.getElementById('room-code').value.trim();
+            const username = document.getElementById('username').value.trim();
+            if (!roomCode || !username) {
+                errorDiv.textContent = 'Please enter a room code and username.';
+                return;
+            }
+            socket.emit('join-room', { roomCode, username }, (response) => {
+                if (response.error) {
+                    errorDiv.textContent = response.error;
+                } else {
+                    lobby.style.display = 'none';
+                    game.style.display = 'block';
+                    roomDisplay.textContent = roomCode;
+                }
+            });
+        };
+
+        socket.on('update-players', (players) => {
+            playersList.innerHTML = '';
+            players.forEach((player) => {
+                const li = document.createElement('li');
+                li.textContent = player.username;
+                playersList.appendChild(li);
+            });
+        });
+
+        document.getElementById('start-game').onclick = () => {
+            const roomCode = document.getElementById('room-code').value.trim();
+            socket.emit('start-game', { roomCode });
+        };
+
+        socket.on('game-started', ({ role }) => {
+            roleDisplay.textContent = `Your role: ${role}`;
+        });
+    </script>
+</body>
+
+</html>
