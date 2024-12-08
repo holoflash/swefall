@@ -1,148 +1,146 @@
+:root {
+  --color-1: #fbf5ef;
+  --color-2: #f2d3ab;
+  --color-3: #c69fa5;
+  --color-4: #8b6d9c;
+  --color-5: #494d7e;
+  --color-6: #272744;
+  --color-7: #f0c24a;
+  --color-error: rgb(255, 69, 69);
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Arial', sans-serif;
-  background-color: #000000;
-  margin: 0;
-  padding: 0;
+.game-view {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #fff;
-  overflow: hidden;
+  flex-direction: column;
+  width: 100vw;
 }
 
-h1 {
-  font-size: 2rem;
+header {
+  text-align: center;
+  font-size: 3rem;
+  color: var(--color-4);
+  margin-top: 10px;
   letter-spacing: 20px;
-  font-weight: bold;
-  color: #00bfae;
-  text-transform: uppercase;
+  text-indent: 20px;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: var(--color-6);
+  margin: 0;
+  padding: 0;
+  color: var(--color-1);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 #lobby,
 #game {
   text-align: center;
-  width: 100%;
-  max-width: 600px;
-  padding: 50px;
-  background-color: #222222;
-  border: 2px solid #444444;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
-  margin-top: 20px;
+  padding: 10px;
+  margin: 10px 0;
+  background-color: var(--color-5);
+  border: 2px solid var(--color-4);
   font-weight: bold;
-  letter-spacing: 1px;
+  width: 90%
 }
 
 #lobby {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 90%;
 }
 
 input,
 button {
   padding: 15px 30px;
-  margin: 15px 0;
+  margin: 5px 0;
   font-size: 1.2rem;
-  border: 2px solid #555555;
+  border: 2px solid var(--color-4);
   outline: none;
   width: 100%;
-  max-width: 400px;
   box-sizing: border-box;
-  background-color: #111111;
-  color: #fff;
-  transition: none;
+  background-color: var(--color-6);
+  color: var(--color-1);
   font-weight: bold;
 }
 
 #create-room,
 #join-room {
-  background-color: #00bfae;
-  color: black;
+  background-color: var(--color-2);
+  color: var(--color-6);
   cursor: pointer;
 }
 
 #create-room:hover,
 #join-room:hover {
-  background-color: #008b82;
+  background-color: var(--color-3);
 }
 
 #start-game {
-  background-color: #008b82;
-  color: black;
+  background-color: var(--color-3);
+  color: var(--color-6);
   cursor: pointer;
   width: fit-content;
 }
 
-#start-game:hover {
-  background-color: #00bfae;
-}
-
 #error {
   margin-top: 10px;
-  color: #ff4d4d;
-  font-size: 1.2rem;
-  text-transform: uppercase;
+  color: var(--color-error);
+  font-size: 1rem;
 }
 
 #players {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
-#players li {
-  margin: 10px 0;
-  font-size: 1rem;
-  color: #fff;
+#players {
+  margin: 5px;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--color-1);
   font-weight: bold;
+  font-style: italic;
 }
 
 #game {
   display: none;
-  width: 90%;
 }
 
-h2 {
-  font-size: 2rem;
-  margin-bottom: 15px;
-  color: #00bfae;
-}
-
-h3 {
-  font-size: 1.2rem;
-  margin-top: 20px;
-  color: #b0bec5;
+#player-label {
+  font-style: italic;
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-4);
 }
 
 #role-display {
-  font-size: 2rem;
-  margin-top: 20px;
+  font-size: 1.8rem;
+  margin: 20px;
   font-weight: bold;
-  color: #ffd700;
+  color: var(--color-7);
 }
 
 #room-display {
-  color: white;
+  color: var(--color-1);
 }
 
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  max-height: 100%;
   flex-direction: column;
-  padding: 50px;
-}
-
-.container>* {
-  margin: 30px;
+  width: 100%;
 }
 
 button:active,
@@ -157,13 +155,13 @@ input:focus-visible {
 }
 
 button {
-  margin-top: 20px;
-  background-color: #00bfae;
-  color: black;
+  background-color: var(--color-2);
+  color: var(--color-6);
   font-weight: bold;
   cursor: pointer;
 }
 
 button:hover {
-  background-color: #008b82;
+  background-color: var(--color-4);
+  color: var(--color-1);
 }

@@ -20,7 +20,7 @@ const App: React.FC = () => {
 
   const joinRoom = () => {
     if (!roomCode || !username) {
-      setError('Please enter a room code and username.');
+      setError('Rumskod och/eller namn saknas');
       return;
     }
 
@@ -68,46 +68,48 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="container">
-      <h1>SWEFALL</h1>
+    <div className='game-view'>
+      <header>SWEFALL</header>
+      <div className="container">
+        {!gameStarted && !hasJoinedRoom ? (
+          <div id="lobby">
+            <p>Skapa ett rum eller fyll i rumskod för att gå med i ett rum</p>
+            <button onClick={createRoom}>Skapa Rum</button>
+            <input
+              id="room-code"
+              placeholder="Rumskod"
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value)}
+            />
+            <input
+              id="username"
+              placeholder="Namn"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <button onClick={joinRoom}>Gå in i rummet</button>
+            {error && <div id="error">{error}</div>}
+          </div>
+        ) : null}
 
-      {!gameStarted && !hasJoinedRoom ? (
-        <div id="lobby">
-          <button onClick={createRoom}>Skapa Rum</button>
-          <input
-            id="room-code"
-            placeholder="Room Code"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value)}
-          />
-          <input
-            id="username"
-            placeholder="Your Name"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <button onClick={joinRoom}>Joina Rummet</button>
-          {error && <div id="error">{error}</div>}
+        <div id="game" style={{ display: gameStarted || players.length > 0 ? 'block' : 'none' }}>
+          <h2>Rum: {roomCode}</h2>
+          <h3 id="player-label">Spelare:</h3>
+          <ul id="players">
+            {players.map((player, index) => (
+              <li key={index}>{player}</li>
+            ))}
+          </ul>
+          {!gameStarted && players.length > 0 && (
+            <button onClick={startGame}>Starta</button>
+          )}
+          {role && (
+            <>
+              <div id="role-display">Du är {role}</div>
+              <button id="next-location" onClick={nextLocation}>Byta byta!</button>
+            </>
+          )}
         </div>
-      ) : null}
-
-      <div id="game" style={{ display: gameStarted || players.length > 0 ? 'block' : 'none' }}>
-        <h2>Rum: {roomCode}</h2>
-        <h3>Spelare:</h3>
-        <ul id="players">
-          {players.map((player, index) => (
-            <li key={index}>{player}</li>
-          ))}
-        </ul>
-        {!gameStarted && players.length > 0 && (
-          <button onClick={startGame}>Starta</button>
-        )}
-        {role && (
-          <>
-            <h3 id="role-display">{role}</h3>
-            <button id="next-location" onClick={nextLocation}>Nästa Plats</button>
-          </>
-        )}
       </div>
     </div>
   );

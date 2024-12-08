@@ -48,7 +48,7 @@ io.on('connection', (socket) => {
 
     socket.on('start-game', ({ roomCode }) => {
         const room = rooms[roomCode];
-        if (!room || room.players.length < 2) {
+        if (!room || room.players.length < 1) {
             return io.to(socket.id).emit('error', 'Not enough players to start the game');
         }
 
@@ -57,7 +57,7 @@ io.on('connection', (socket) => {
         room.spy = room.players[spyIndex].id;
 
         room.players.forEach((player) => {
-            const role = player.id === room.spy ? 'Spy' : room.location;
+            const role = player.id === room.spy ? 'spion' : room.location;
             io.to(player.id).emit('game-started', { role });
         });
     });
@@ -72,7 +72,7 @@ io.on('connection', (socket) => {
         const spyPlayer = room.players[spyIndex];
 
         room.players.forEach((player) => {
-            const role = player === spyPlayer ? 'Spy' : room.location;
+            const role = player === spyPlayer ? 'spion' : room.location;
             io.to(player.id).emit('location-updated', { role });
         });
     });
