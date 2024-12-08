@@ -2,7 +2,10 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { nanoid } from 'nanoid';
+import path from 'path';
 import { locations } from './locations.js';
+
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 const app = express();
 const server = createServer(app);
@@ -10,7 +13,7 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'swefall-client', 'dist')));
 
 const rooms = {};
 
@@ -59,6 +62,21 @@ io.on('connection', (socket) => {
         });
     });
 
+    socket.on('next-location', ({ roomCode }) => {
+        const room = rooms[roomCode];
+        if (!room) return;
+
+        room.location = locations[Math.floor(Math.random() * locations.length)];
+
+        const spyIndex = Math.floor(Math.random() * room.players.length);
+        const spyPlayer = room.players[spyIndex];
+
+        room.players.forEach((player) => {
+            const role = player === spyPlayer ? 'Spy' : room.location;
+            io.to(player.id).emit('location-updated', { role });
+        });
+    });
+
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
         for (const roomCode in rooms) {
@@ -73,7 +91,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Start server
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
