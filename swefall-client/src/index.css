@@ -1,33 +1,41 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
-  font-family: 'Roboto', sans-serif;
-  background-color: #121212;
+  font-family: 'Arial', sans-serif;
+  background-color: #000000;
   margin: 0;
   padding: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  color: #E0E0E0;
+  color: #fff;
   overflow: hidden;
 }
 
 h1 {
-  font-size: 3.5rem;
-  margin-bottom: 20px;
-  font-weight: 700;
-  color: #D1A6FF;
+  font-size: 2rem;
+  letter-spacing: 20px;
+  font-weight: bold;
+  color: #00bfae;
+  text-transform: uppercase;
 }
 
 #lobby,
 #game {
   text-align: center;
   width: 100%;
-  max-width: 500px;
-  padding: 30px;
-  background-color: #333333;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  margin-top: 10px;
+  max-width: 600px;
+  padding: 50px;
+  background-color: #222222;
+  border: 2px solid #444444;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+  margin-top: 20px;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
 
 #lobby {
@@ -39,60 +47,49 @@ h1 {
 
 input,
 button {
-  padding: 12px 24px;
-  margin: 12px 0;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: 1px solid #555;
+  padding: 15px 30px;
+  margin: 15px 0;
+  font-size: 1.2rem;
+  border: 2px solid #555555;
   outline: none;
   width: 100%;
-  max-width: 350px;
+  max-width: 400px;
   box-sizing: border-box;
-  background-color: #444444;
-  color: #E0E0E0;
-  transition: all 0.2s ease;
-}
-
-input:focus,
-button:focus {
-  border-color: #9C27B0;
-  box-shadow: 0 0 8px rgba(156, 39, 176, 0.6);
-}
-
-input:focus:not(:focus-visible),
-button:focus:not(:focus-visible) {
-  outline: none;
+  background-color: #111111;
+  color: #fff;
+  transition: none;
+  text-transform: uppercase;
+  font-weight: bold;
 }
 
 #create-room,
 #join-room {
-  background-color: #9C27B0;
-  color: white;
-  font-weight: bold;
+  background-color: #00bfae;
+  color: black;
   cursor: pointer;
 }
 
 #create-room:hover,
 #join-room:hover {
-  background-color: #7B1FA2;
+  background-color: #008b82;
 }
 
 #start-game {
-  background-color: #673AB7;
-  color: white;
-  font-weight: bold;
+  background-color: #008b82;
+  color: black;
   cursor: pointer;
   width: fit-content;
 }
 
 #start-game:hover {
-  background-color: #512DA8;
+  background-color: #00bfae;
 }
 
 #error {
   margin-top: 10px;
-  color: #F44336;
-  font-size: 0.9rem;
+  color: #ff4d4d;
+  font-size: 1.2rem;
+  text-transform: uppercase;
 }
 
 #players {
@@ -101,9 +98,10 @@ button:focus:not(:focus-visible) {
 }
 
 #players li {
-  margin: 2px 0;
+  margin: 10px 0;
   font-size: 1rem;
-  color: #E0E0E0;
+  color: #fff;
+  font-weight: bold;
 }
 
 #game {
@@ -112,22 +110,22 @@ button:focus:not(:focus-visible) {
 }
 
 h2 {
-  font-size: 1.8rem;
+  font-size: 2rem;
   margin-bottom: 15px;
-  color: #9C27B0;
+  color: #00bfae;
 }
 
 h3 {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   margin-top: 20px;
-  color: #B0BEC5;
+  color: #b0bec5;
 }
 
 #role-display {
-  font-size: 1.5rem;
+  font-size: 2rem;
   margin-top: 20px;
   font-weight: bold;
-  color: #ffe600;
+  color: #ffd700;
 }
 
 #room-display {
@@ -141,12 +139,11 @@ h3 {
   width: 100%;
   max-height: 100%;
   flex-direction: column;
-  justify-content: center;
-  padding: 30px;
+  padding: 50px;
 }
 
 .container>* {
-  margin: 20px;
+  margin: 30px;
 }
 
 button:active,
@@ -158,4 +155,16 @@ input:active {
 button:focus-visible,
 input:focus-visible {
   outline: none;
+}
+
+button {
+  margin-top: 20px;
+  background-color: #00bfae;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #008b82;
 }

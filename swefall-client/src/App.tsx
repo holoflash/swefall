@@ -10,6 +10,7 @@ const App: React.FC = () => {
   const [players, setPlayers] = useState<string[]>([]);
   const [role, setRole] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
+  const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
 
   const createRoom = () => {
     socket.emit('create-room', (code: string) => {
@@ -28,6 +29,7 @@ const App: React.FC = () => {
         setError(response.error);
       } else {
         setError('');
+        setHasJoinedRoom(true);
         setGameStarted(false);
       }
     });
@@ -38,7 +40,10 @@ const App: React.FC = () => {
   };
 
   const nextLocation = () => {
-    socket.emit('next-location', { roomCode });
+    const confirmNextLocation = window.confirm('Gå till nästa plats?');
+    if (confirmNextLocation) {
+      socket.emit('next-location', { roomCode });
+    }
   };
 
   useEffect(() => {
@@ -63,10 +68,10 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="container" style={{ textAlign: 'center', color: '#E0E0E0' }}>
+    <div className="container">
       <h1>SWEFALL</h1>
 
-      {!gameStarted ? (
+      {!gameStarted && !hasJoinedRoom ? (
         <div id="lobby">
           <button onClick={createRoom}>Skapa Rum</button>
           <input
@@ -82,7 +87,7 @@ const App: React.FC = () => {
             onChange={(e) => setUsername(e.target.value)}
           />
           <button onClick={joinRoom}>Joina Rummet</button>
-          {error && <div id="error" style={{ color: 'red' }}>{error}</div>}
+          {error && <div id="error">{error}</div>}
         </div>
       ) : null}
 
@@ -100,7 +105,7 @@ const App: React.FC = () => {
         {role && (
           <>
             <h3 id="role-display">{role}</h3>
-            <button onClick={nextLocation}>Nästa Plats</button>
+            <button id="next-location" onClick={nextLocation}>Nästa Plats</button>
           </>
         )}
       </div>
