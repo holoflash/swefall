@@ -64,7 +64,7 @@ io.on('connection', (socket) => {
         if (!rateLimit()) return;
 
         const room = rooms[roomCode];
-        if (!room || room.players.length < 4) {
+        if (!room || room.players.length < 3) {
             return socket.emit('error', 'Inte tillräckligt många spelare för att starta');
         }
 
