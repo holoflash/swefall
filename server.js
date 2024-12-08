@@ -48,7 +48,7 @@ io.on('connection', (socket) => {
 
     socket.on('start-game', ({ roomCode }) => {
         const room = rooms[roomCode];
-        if (!room || room.players.length < 1) {
+        if (!room || room.players.length < 2) {
             return io.to(socket.id).emit('error', 'Not enough players to start the game');
         }
 
