@@ -26,7 +26,7 @@ export const locations = [
     'hemma - at home',
     'på bussen - on the bus',
     'i tunnelbanan - on the subway',
-    'på ön - on the island',
+    'på en ö - on an island',
     'på biltvätten - in the car wash',
     'vid hamnen - at the harbor',
     'på skidbacken - on the ski slope',

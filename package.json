@@ -5,6 +5,7 @@
   "description": "A simple Spyfall game in Swedish and English using Node.js and Socket.IO",
   "scripts": {
     "start": "nodemon server.js",
+    "dev": "cd swefall-client && npm run dev",
     "build": "echo 'No build step required'"
   },
   "keywords": [ ],

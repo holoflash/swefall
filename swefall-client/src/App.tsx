@@ -1,115 +1,98 @@
-import React, { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
-
-const socket = io();
+import React, { useEffect, useState, useCallback } from 'react';
+import * as ServerActions from './serverActions';
 
 const App: React.FC = () => {
-  const [roomCode, setRoomCode] = useState('');
+  const [state, setState] = useState<ServerActions.ServerState>({
+    roomCode: '',
+    players: [],
+    role: null,
+    gameStarted: false,
+  });
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
-  const [players, setPlayers] = useState<string[]>([]);
-  const [role, setRole] = useState<string | null>(null);
-  const [gameStarted, setGameStarted] = useState(false);
-  const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
 
-  const createRoom = () => {
-    socket.emit('create-room', (code: string) => {
-      setRoomCode(code);
-    });
-  };
+  const updateState = useCallback(
+    (partialState: Partial<ServerActions.ServerState>) => {
+      setState((prevState) => ({ ...prevState, ...partialState }));
+    },
+    []
+  );
 
-  const joinRoom = () => {
-    if (!roomCode || !username) {
+  useEffect(() => {
+    const cleanup = ServerActions.initializeServerActions(updateState, setError);
+    return () => cleanup();
+  }, [updateState]);
+
+  const handleCreateRoom = () => ServerActions.createRoom(updateState);
+
+  const handleJoinRoom = () => {
+    if (!state.roomCode || !username) {
       setError('Rumskod och/eller namn saknas');
       return;
     }
-
-    socket.emit('join-room', { roomCode, username }, (response: { error?: string }) => {
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setError('');
-        setHasJoinedRoom(true);
-        setGameStarted(false);
-      }
-    });
+    ServerActions.joinRoom(state.roomCode, username, updateState, setError);
   };
 
-  const startGame = () => {
-    socket.emit('start-game', { roomCode });
-  };
+  const handleStartGame = () => ServerActions.startGame(state.roomCode);
 
-  const nextLocation = () => {
-    const confirmNextLocation = window.confirm('Gå till nästa plats?');
-    if (confirmNextLocation) {
-      socket.emit('next-location', { roomCode });
+  const handleNextLocation = () => {
+    if (window.confirm('Gå till nästa plats?')) {
+      ServerActions.nextLocation(state.roomCode);
     }
   };
 
-  useEffect(() => {
-    socket.on('update-players', (updatedPlayers: { username: string }[]) => {
-      setPlayers(updatedPlayers.map((player) => player.username));
-    });
-
-    socket.on('game-started', ({ role }: { role: string }) => {
-      setRole(role);
-      setGameStarted(true);
-    });
-
-    socket.on('location-updated', ({ role }: { role: string }) => {
-      setRole(role);
-    });
-
-    return () => {
-      socket.off('update-players');
-      socket.off('game-started');
-      socket.off('location-updated');
-    };
-  }, []);
-
   return (
-    <div className='game-view'>
+    <div className="game-view">
       <header>SWEFALL</header>
       <div className="container">
-        {!gameStarted && !hasJoinedRoom ? (
+        {!state.gameStarted && state.players.length === 0 ? (
           <div id="lobby">
             <p>Skapa ett rum eller fyll i rumskod för att gå med i ett rum</p>
-            <button onClick={createRoom}>Skapa Rum</button>
+            <button onClick={handleCreateRoom}>Skapa Rum</button>
             <input
               id="room-code"
               placeholder="Rumskod"
-              value={roomCode}
-              onChange={(e) => setRoomCode(e.target.value)}
+              value={state.roomCode}
+              onChange={(e) => updateState({ roomCode: e.target.value })}
             />
             <input
               id="username"
-              placeholder="Namn"
+              placeholder="Namn (max 10 tecken)"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value.length <= 10) {
+                  setUsername(e.target.value);
+                }
+              }}
+              maxLength={20}
             />
-            <button onClick={joinRoom}>Gå in i rummet</button>
-            {error && <div id="error">{error}</div>}
+            <button onClick={handleJoinRoom}>Gå in i rummet</button>
           </div>
         ) : null}
 
-        <div id="game" style={{ display: gameStarted || players.length > 0 ? 'block' : 'none' }}>
-          <h2>Rum: {roomCode}</h2>
-          <h3 id="player-label">Spelare:</h3>
-          <ul id="players">
-            {players.map((player, index) => (
-              <li key={index}>{player}</li>
-            ))}
-          </ul>
-          {!gameStarted && players.length > 0 && (
-            <button onClick={startGame}>Starta</button>
-          )}
-          {role && (
-            <>
-              <div id="role-display">Du är {role}</div>
-              <button id="next-location" onClick={nextLocation}>Byta byta!</button>
-            </>
-          )}
-        </div>
+        {(state.gameStarted || state.players.length > 0) && (
+          <div id="game">
+            <h2>Rum: {state.roomCode}</h2>
+            <h3 id="player-label">Spelare:</h3>
+            <ul id="players">
+              {state.players.map((player, index) => (
+                <li key={index}>{player}</li>
+              ))}
+            </ul>
+            {!state.gameStarted && state.players.length > 0 && (
+              <button onClick={handleStartGame}>Starta</button>
+            )}
+            {state.role && (
+              <>
+                <div id="role-display">Du är {state.role}</div>
+                <button id="next-location" onClick={handleNextLocation}>
+                  Byta byta!
+                </button>
+              </>
+            )}
+            {error && <div id="error">{error}</div>}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -113,10 +113,6 @@ button {
   font-style: italic;
 }
 
-#game {
-  display: none;
-}
-
 #player-label {
   font-style: italic;
   margin: 0;
