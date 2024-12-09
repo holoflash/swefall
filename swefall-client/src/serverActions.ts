@@ -22,9 +22,8 @@ export const initializeServerActions = (
         updateState({ gameStarted: true, role, roleEn });
     };
 
-
-    const handleLocationUpdated = ({ role }: { role: string }) => {
-        updateState({ role });
+    const handleLocationUpdated = ({ role, roleEn }: { role: string; roleEn: string | null }) => {
+        updateState({ role, roleEn });
     };
 
     const handleError = (errorMessage: string) => {
