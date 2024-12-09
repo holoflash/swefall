@@ -6,9 +6,11 @@ const App: React.FC = () => {
     roomCode: '',
     players: [],
     role: null,
+    roleEn: null,
     gameStarted: false,
   });
   const [username, setUsername] = useState('');
+  const [includeEnglish, setIncludeEnglish] = useState(false);
   const [error, setError] = useState('');
 
   const updateState = useCallback(
@@ -23,14 +25,33 @@ const App: React.FC = () => {
     return () => cleanup();
   }, [updateState]);
 
-  const handleCreateRoom = () => ServerActions.createRoom(updateState);
+  useEffect(() => {
+    const storedRoomCode = localStorage.getItem('roomCode');
+    const storedUsername = localStorage.getItem('username');
+    const storedIncludeEnglish = localStorage.getItem('includeEnglish') === 'true';
+    if (storedRoomCode && storedUsername) {
+      updateState({ roomCode: storedRoomCode });
+      setUsername(storedUsername);
+      setIncludeEnglish(storedIncludeEnglish);
+      ServerActions.joinRoom(
+        storedRoomCode,
+        storedUsername,
+        storedIncludeEnglish,
+        updateState,
+        setError
+      );
+    }
+  }, [updateState]);
+
+  const handleCreateRoom = () => {
+    ServerActions.createRoom(updateState);
+  };
 
   const handleJoinRoom = () => {
-    if (!state.roomCode || !username) {
-      setError('Rumskod och/eller namn saknas');
-      return;
-    }
-    ServerActions.joinRoom(state.roomCode, username, updateState, setError);
+    ServerActions.joinRoom(state.roomCode, username, includeEnglish, updateState, setError);
+    localStorage.setItem('roomCode', state.roomCode);
+    localStorage.setItem('username', username);
+    localStorage.setItem('includeEnglish', includeEnglish.toString());
   };
 
   const handleStartGame = () => ServerActions.startGame(state.roomCode);
@@ -38,6 +59,16 @@ const App: React.FC = () => {
   const handleNextLocation = () => {
     if (window.confirm('Gå till nästa plats?')) {
       ServerActions.nextLocation(state.roomCode);
+    }
+  };
+
+  const handleClearLocalStorage = () => {
+    if (window.confirm('Är du säker på att du vill lämna rummet?')) {
+      localStorage.clear();
+      updateState({ roomCode: '', players: [], role: null, gameStarted: false });
+      setUsername('');
+      setIncludeEnglish(false);
+      setError('');
     }
   };
 
@@ -66,7 +97,16 @@ const App: React.FC = () => {
               }}
               maxLength={20}
             />
+            <label id="english">
+              <input
+                type="checkbox"
+                checked={includeEnglish}
+                onChange={(e) => setIncludeEnglish(e.target.checked)}
+              />
+              English locations
+            </label>
             <button onClick={handleJoinRoom}>Gå in i rummet</button>
+            {error && <div id="error">{error}</div>}
           </div>
         ) : null}
 
@@ -79,17 +119,24 @@ const App: React.FC = () => {
                 <li key={index}>{player}</li>
               ))}
             </ul>
-            {!state.gameStarted && state.players.length > 0 && (
-              <button onClick={handleStartGame}>Starta</button>
-            )}
             {state.role && (
               <>
-                <div id="role-display">Du är {state.role}</div>
+                <div id="role-display">
+                  {includeEnglish && state.roleEn
+                    ? `You are ${state.roleEn}`
+                    : `Du är ${state.role}`}
+                </div>
                 <button id="next-location" onClick={handleNextLocation}>
-                  Byta byta!
+                  Nästa plats
                 </button>
               </>
             )}
+            {!state.gameStarted && state.players.length > 0 && (
+              <button onClick={handleStartGame}>Starta</button>
+            )}
+            <button id="leave" onClick={handleClearLocalStorage}>
+              Lämna rummet
+            </button>
             {error && <div id="error">{error}</div>}
           </div>
         )}

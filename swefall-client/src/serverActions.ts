@@ -6,6 +6,7 @@ export interface ServerState {
     roomCode: string;
     players: string[];
     role: string | null;
+    roleEn: string | null;
     gameStarted: boolean;
 }
 
@@ -17,9 +18,10 @@ export const initializeServerActions = (
         updateState({ players: updatedPlayers.map((player) => player.username) });
     };
 
-    const handleGameStarted = ({ role }: { role: string }) => {
-        updateState({ gameStarted: true, role });
+    const handleGameStarted = ({ role, roleEn }: { role: string; roleEn: string | null }) => {
+        updateState({ gameStarted: true, role, roleEn });
     };
+
 
     const handleLocationUpdated = ({ role }: { role: string }) => {
         updateState({ role });
@@ -52,18 +54,24 @@ export const createRoom = (updateState: (partialState: Partial<ServerState>) => 
 export const joinRoom = (
     roomCode: string,
     username: string,
+    includeEnglish: boolean,
     updateState: (partialState: Partial<ServerState>) => void,
     setError: (error: string) => void
 ) => {
-    socket.emit('join-room', { roomCode, username }, (response: { error?: string }) => {
-        if (response.error) {
-            setError(response.error);
-        } else {
-            setError('');
-            updateState({ gameStarted: false });
+    socket.emit(
+        'join-room',
+        { roomCode, username, includeEnglish },
+        (response: { error?: string }) => {
+            if (response.error) {
+                setError(response.error);
+            } else {
+                setError('');
+                updateState({ gameStarted: false });
+            }
         }
-    });
+    );
 };
+
 
 export const startGame = (roomCode: string) => {
     socket.emit('start-game', { roomCode });

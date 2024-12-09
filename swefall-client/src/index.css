@@ -59,8 +59,13 @@ body {
   align-items: center;
 }
 
-input,
-button {
+input {
+  background-color: var(--color-6);
+  color: var(--color-1);
+}
+
+button,
+input {
   padding: 15px 30px;
   margin: 5px 0;
   font-size: 1.2rem;
@@ -68,29 +73,34 @@ button {
   outline: none;
   width: 100%;
   box-sizing: border-box;
-  background-color: var(--color-6);
-  color: var(--color-1);
   font-weight: bold;
 }
 
-#create-room,
-#join-room {
-  background-color: var(--color-2);
+button {
+  background-color: var(--color-3);
   color: var(--color-6);
   cursor: pointer;
 }
 
-#create-room:hover,
-#join-room:hover {
+button:hover {
   background-color: var(--color-3);
+  border: 2px solid var(--color-2);
 }
 
-#start-game {
-  background-color: var(--color-3);
-  color: var(--color-6);
-  cursor: pointer;
-  width: fit-content;
+#english {
+  align-self: flex-start;
+  margin: 10px;
+  gap: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-wrap: nowrap;
 }
+
+#leave {
+  background-color: var(--color-5);
+}
+
 
 #error {
   margin-top: 10px;

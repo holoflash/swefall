@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import { nanoid } from 'nanoid';
 import path from 'path';
 import { locations } from './locations.js';
+import helmet from 'helmet'
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
@@ -18,6 +19,7 @@ const RATE_LIMIT_MS = 200;
 const rooms = {};
 const rateLimiter = new Map();
 
+app.use(helmet());
 app.use(express.static(path.join(__dirname, 'swefall-client', 'dist')));
 
 const createRoom = () => {
@@ -31,66 +33,83 @@ const createRoom = () => {
 
 const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-io.on('connection', (socket) => {
-    const rateLimit = () => {
-        const now = Date.now();
-        if (rateLimiter.has(socket.id) && now - rateLimiter.get(socket.id) < RATE_LIMIT_MS) {
-            socket.emit('error', 'Du går för fort! Sakta ner.');
-            return false;
-        }
-        rateLimiter.set(socket.id, now);
-        return true;
-    };
+const rateLimit = (socket) => {
+    const now = Date.now();
+    if (rateLimiter.has(socket.id) && now - rateLimiter.get(socket.id) < RATE_LIMIT_MS) {
+        socket.emit('error', 'Too many requests. Please slow down.');
+        return false;
+    }
+    rateLimiter.set(socket.id, now);
+    return true;
+};
 
+io.on('connection', (socket) => {
     socket.on('create-room', (callback) => {
-        if (!rateLimit()) return;
+        if (!rateLimit(socket)) return;
         const roomCode = createRoom();
         callback(roomCode);
     });
 
-    socket.on('join-room', ({ roomCode, username }, callback) => {
-        if (!rateLimit()) return;
+    socket.on('join-room', ({ roomCode, username, includeEnglish }, callback) => {
+        if (!rateLimit(socket)) return;
+
+        if (!username) {
+            return socket.emit('error', 'Ange ett giltigt namn');
+        }
+
+        if (!roomCode || !rooms[roomCode]) {
+            return socket.emit('error', 'Ogiltigt rumskod');
+        }
 
         const room = rooms[roomCode];
-        if (!room) return callback({ error: 'Rummet finns inte' });
-
-        room.players.push({ id: socket.id, username });
+        room.players.push({ id: socket.id, username, includeEnglish });
         socket.join(roomCode);
+
         io.to(roomCode).emit('update-players', room.players);
+
         callback({ success: true });
     });
 
+
     socket.on('start-game', ({ roomCode }) => {
-        if (!rateLimit()) return;
+        if (!rateLimit(socket)) return;
 
         const room = rooms[roomCode];
-        if (!room || room.players.length < 3) {
-            return socket.emit('error', 'Inte tillräckligt många spelare för att starta');
+        if (!room || room.players.length < 1) {
+            return socket.emit('error', 'Minst 3 spelare krävs för att starta spelet');
         }
 
-        room.location = pickRandom(locations);
+        const [swedish, english] = pickRandom(locations).split('/');
         const spyPlayer = pickRandom(room.players);
         room.spy = spyPlayer.id;
 
         room.players.forEach((player) => {
-            const role = player.id === room.spy ? 'spion' : room.location;
-            io.to(player.id).emit('game-started', { role });
+            const role = player.id === room.spy ? 'spionen' : swedish;
+            const roleEn = player.id === room.spy ? 'the spy' : english.trim();
+            io.to(player.id).emit('game-started', {
+                role,
+                roleEn: player.includeEnglish ? roleEn : null,
+            });
         });
     });
 
     socket.on('next-location', ({ roomCode }) => {
-        if (!rateLimit()) return;
+        if (!rateLimit(socket)) return;
 
         const room = rooms[roomCode];
         if (!room) return;
 
-        room.location = pickRandom(locations);
+        const [swedish, english] = pickRandom(locations).split('/');
         const spyPlayer = pickRandom(room.players);
         room.spy = spyPlayer.id;
 
         room.players.forEach((player) => {
-            const role = player.id === room.spy ? 'spion' : room.location;
-            io.to(player.id).emit('location-updated', { role });
+            const role = player.id === room.spy ? 'spionen' : swedish;
+            const roleEn = player.id === room.spy ? 'the spy' : english.trim();
+            io.to(player.id).emit('location-updated', {
+                role,
+                roleEn: player.includeEnglish ? roleEn : null,
+            });
         });
     });
 
@@ -108,11 +127,8 @@ io.on('connection', (socket) => {
 
         rateLimiter.delete(socket.id);
     });
-
-    socket.on('error', (err) => {
-        console.error(`Socket error from ${socket.id}:`, err);
-    });
 });
+
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
