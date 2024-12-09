@@ -122,9 +122,14 @@ const App: React.FC = () => {
             {state.role && (
               <>
                 <div id="role-display">
-                  {includeEnglish && state.roleEn
-                    ? `You are ${state.roleEn}`
-                    : `Du är ${state.role}`}
+                  {state.roleEn && includeEnglish ? (
+                    <>
+                      <div>{`Du är ${state.role}`}</div>
+                      <div>{`You are ${state.roleEn}`}</div>
+                    </>
+                  ) : (
+                    `Du är ${state.role}`
+                  )}
                 </div>
                 <button id="next-location" onClick={handleNextLocation}>
                   Nästa plats

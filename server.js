@@ -75,8 +75,8 @@ io.on('connection', (socket) => {
         if (!rateLimit(socket)) return;
 
         const room = rooms[roomCode];
-        if (!room || room.players.length < 1) {
-            return socket.emit('error', 'Minst 3 spelare krävs för att starta spelet');
+        if (!room || room.players.length < 2) {
+            return socket.emit('error', 'Minst 2 spelare krävs för att starta spelet');
         }
 
         const [swedish, english] = pickRandom(locations).split('/');
@@ -100,18 +100,21 @@ io.on('connection', (socket) => {
         if (!room) return;
 
         const [swedish, english] = pickRandom(locations).split('/');
+
         const spyPlayer = pickRandom(room.players);
         room.spy = spyPlayer.id;
 
         room.players.forEach((player) => {
             const role = player.id === room.spy ? 'spionen' : swedish;
             const roleEn = player.id === room.spy ? 'the spy' : english.trim();
+
             io.to(player.id).emit('location-updated', {
                 role,
                 roleEn: player.includeEnglish ? roleEn : null,
             });
         });
     });
+
 
     socket.on('disconnect', () => {
         for (const roomCode in rooms) {
