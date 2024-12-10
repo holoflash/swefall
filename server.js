@@ -23,29 +23,50 @@ app.use(helmet());
 
 app.use(express.static(path.join(__dirname, 'swefall-client', 'dist')));
 
+const shuffleLocations = () => {
+
+    const shuffledLocations = [...locations];
+
+    for (let i = shuffledLocations.length - 1; i > 0; i--) {
+
+        const j = Math.floor(Math.random() * (i + 1));
+
+        [shuffledLocations[i], shuffledLocations[j]] = [shuffledLocations[j], shuffledLocations[i]];
+
+    }
+
+    return shuffledLocations;
+
+};
+
 const createRoom = () => {
     let code;
     do {
         code = nanoid(ROOM_CODE_LENGTH).toUpperCase();
     } while (rooms[code]);
-    rooms[code] = { players: [], spy: null, location: null };
+    rooms[code] = { players: [], spy: null, locations: shuffleLocations(), locationIndex: 0 };
     return code;
 };
-
-const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 const handleLocationUpdate = (roomCode, eventName) => {
     const room = rooms[roomCode];
     if (!room) return;
 
-    room.location = pickRandom(locations);
-    const spyPlayer = pickRandom(room.players);
-    room.spy = spyPlayer.id;
+    if (room.locationIndex >= room.locations.length) {
+        return { error: 'No more locations left' };
+    }
 
-    room.players.forEach((player) => {
-        const [swedish, english] = room.location.split('/');
-        const role = player.id === room.spy ? 'spion' : swedish;
-        const roleEn = player.id === room.spy ? 'the spy' : english.trim();
+    const spyIndex = Math.floor(Math.random() * room.players.length);
+    const spyPlayer = room.players[spyIndex];
+
+    const location = room.locations[room.locationIndex];
+    room.locationIndex++;
+
+    room.players.forEach((player, index) => {
+        const [swedish, english] = location.split('/');
+        const isSpy = player.id === spyPlayer.id;
+        const role = isSpy ? 'spion' : swedish;
+        const roleEn = isSpy ? 'the spy' : english.trim();
 
         io.to(player.id).emit(eventName, {
             role,
@@ -53,6 +74,7 @@ const handleLocationUpdate = (roomCode, eventName) => {
         });
     });
 };
+
 
 io.on('connection', (socket) => {
     const rateLimit = () => {

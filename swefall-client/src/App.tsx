@@ -112,7 +112,7 @@ const App: React.FC = () => {
 
         {(state.gameStarted || state.players.length > 0) && (
           <div id="game">
-            <h2>Rum: {state.roomCode}</h2>
+            <h2 id="room-display">Rum: {state.roomCode}</h2>
             <h3 id="player-label">Spelare:</h3>
             <ul id="players">
               {state.players.map((player, index) => (
@@ -125,7 +125,7 @@ const App: React.FC = () => {
                   {state.roleEn && includeEnglish ? (
                     <>
                       <div>{`Du är ${state.role}`}</div>
-                      <div>{`You are ${state.roleEn}`}</div>
+                      <div id="english">{`You are ${state.roleEn}`}</div>
                     </>
                   ) : (
                     `Du är ${state.role}`
@@ -136,7 +136,7 @@ const App: React.FC = () => {
                 </button>
               </>
             )}
-            {!state.gameStarted && state.players.length > 0 && (
+            {!state.gameStarted && (
               <button onClick={handleStartGame}>Starta</button>
             )}
             <button id="leave" onClick={handleClearLocalStorage}>

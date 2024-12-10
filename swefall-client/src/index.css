@@ -87,7 +87,7 @@ button:hover {
   border: 2px solid var(--color-2);
 }
 
-#english {
+label {
   align-self: flex-start;
   margin: 10px;
   gap: 10px;
@@ -97,10 +97,13 @@ button:hover {
   text-wrap: nowrap;
 }
 
+#english {
+  color: var(--color-1);
+}
+
 #leave {
   background-color: var(--color-5);
 }
-
 
 #error {
   margin-top: 10px;
@@ -118,13 +121,11 @@ button:hover {
   margin: 5px;
   padding: 0;
   font-size: 0.8rem;
-  color: var(--color-1);
+  color: var(--color-2);
   font-weight: bold;
-  font-style: italic;
 }
 
 #player-label {
-  font-style: italic;
   margin: 0;
   font-size: 1rem;
   color: var(--color-4);
@@ -139,6 +140,8 @@ button:hover {
 
 #room-display {
   color: var(--color-1);
+  margin: 5px;
+  font-size: 2.5rem;
 }
 
 .container {
