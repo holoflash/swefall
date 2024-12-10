@@ -26,8 +26,6 @@ header {
   font-size: 3rem;
   color: var(--color-4);
   margin-top: 10px;
-  letter-spacing: 20px;
-  text-indent: 20px;
 }
 
 body {
@@ -97,6 +95,10 @@ label {
   text-wrap: nowrap;
 }
 
+label>* {
+  width: fit-content;
+}
+
 #english {
   color: var(--color-1);
 }
@@ -141,7 +143,7 @@ label {
 #room-display {
   color: var(--color-1);
   margin: 5px;
-  font-size: 2.5rem;
+  font-size: 1.5rem;
 }
 
 .container {

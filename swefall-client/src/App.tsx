@@ -1,8 +1,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import * as ServerActions from './serverActions';
+import { io } from 'socket.io-client';
+
+const socket = io();
+
+interface ServerState {
+  roomCode: string;
+  players: string[];
+  role: string | null;
+  roleEn: string | null;
+  gameStarted: boolean;
+}
 
 const App: React.FC = () => {
-  const [state, setState] = useState<ServerActions.ServerState>({
+  const [state, setState] = useState<ServerState>({
     roomCode: '',
     players: [],
     role: null,
@@ -14,14 +24,14 @@ const App: React.FC = () => {
   const [error, setError] = useState('');
 
   const updateState = useCallback(
-    (partialState: Partial<ServerActions.ServerState>) => {
+    (partialState: Partial<ServerState>) => {
       setState((prevState) => ({ ...prevState, ...partialState }));
     },
     []
   );
 
   useEffect(() => {
-    const cleanup = ServerActions.initializeServerActions(updateState, setError);
+    const cleanup = initializeServerActions(updateState, setError);
     return () => cleanup();
   }, [updateState]);
 
@@ -29,48 +39,116 @@ const App: React.FC = () => {
     const storedRoomCode = localStorage.getItem('roomCode');
     const storedUsername = localStorage.getItem('username');
     const storedIncludeEnglish = localStorage.getItem('includeEnglish') === 'true';
+
     if (storedRoomCode && storedUsername) {
       updateState({ roomCode: storedRoomCode });
       setUsername(storedUsername);
       setIncludeEnglish(storedIncludeEnglish);
-      ServerActions.joinRoom(
-        storedRoomCode,
-        storedUsername,
-        storedIncludeEnglish,
-        updateState,
-        setError
-      );
+      joinRoom(storedRoomCode, storedUsername, storedIncludeEnglish, updateState, setError);
     }
   }, [updateState]);
 
+  const initializeServerActions = (
+    updateState: (partialState: Partial<ServerState>) => void,
+    setError: (error: string) => void
+  ) => {
+    const handleUpdatePlayers = (updatedPlayers: { username: string }[]) => {
+      updateState({ players: updatedPlayers.map((player) => player.username) });
+    };
+
+    const handleGameStarted = ({ role, roleEn }: { role: string; roleEn: string | null }) => {
+      updateState({ gameStarted: true, role, roleEn });
+    };
+
+    const handleLocationUpdated = ({ role, roleEn }: { role: string; roleEn: string | null }) => {
+      updateState({ role, roleEn });
+    };
+
+    const handleError = (errorMessage: string) => {
+      setError(errorMessage);
+    };
+
+    socket.on('update-players', handleUpdatePlayers);
+    socket.on('game-started', handleGameStarted);
+    socket.on('location-updated', handleLocationUpdated);
+    socket.on('error', handleError);
+
+    return () => {
+      socket.off('update-players', handleUpdatePlayers);
+      socket.off('game-started', handleGameStarted);
+      socket.off('location-updated', handleLocationUpdated);
+      socket.off('error', handleError);
+    };
+  };
+  const createRoom = (updateState: (partialState: Partial<ServerState>) => void) => {
+    socket.emit('create-room', (code: string) => {
+      updateState({ roomCode: code });
+    });
+  };
+
+  const joinRoom = (
+    roomCode: string,
+    username: string,
+    includeEnglish: boolean,
+    updateState: (partialState: Partial<ServerState>) => void,
+    setError: (error: string) => void
+  ) => {
+    socket.emit(
+      'join-room',
+      { roomCode, username, includeEnglish },
+      (response: { error?: string }) => {
+        if (response.error) {
+          setError(response.error);
+        } else {
+          setError('');
+          updateState({ gameStarted: false });
+        }
+      }
+    );
+  };
+
+  const startGame = (roomCode: string) => {
+    socket.emit('start-game', { roomCode });
+  };
+
+  const nextLocation = (roomCode: string) => {
+    socket.emit('next-location', { roomCode });
+  };
+
   const handleCreateRoom = () => {
-    ServerActions.createRoom(updateState);
+    createRoom(updateState);
   };
 
   const handleJoinRoom = () => {
-    ServerActions.joinRoom(state.roomCode, username, includeEnglish, updateState, setError);
+    joinRoom(state.roomCode, username, includeEnglish, updateState, setError);
     localStorage.setItem('roomCode', state.roomCode);
     localStorage.setItem('username', username);
     localStorage.setItem('includeEnglish', includeEnglish.toString());
   };
 
-  const handleStartGame = () => ServerActions.startGame(state.roomCode);
+  const handleStartGame = () => {
+    startGame(state.roomCode);
+    localStorage.setItem('gameStarted', 'true');
+  };
 
   const handleNextLocation = () => {
     if (window.confirm('Gå till nästa plats?')) {
-      ServerActions.nextLocation(state.roomCode);
+      nextLocation(state.roomCode);
     }
   };
 
   const handleClearLocalStorage = () => {
     if (window.confirm('Är du säker på att du vill lämna rummet?')) {
-      localStorage.clear();
-      updateState({ roomCode: '', players: [], role: null, gameStarted: false });
-      setUsername('');
-      setIncludeEnglish(false);
-      setError('');
+      socket.emit('leave-room', { roomCode: state.roomCode }, () => {
+        localStorage.clear();
+        updateState({ roomCode: '', players: [], role: null, gameStarted: false });
+        setUsername('');
+        setIncludeEnglish(false);
+        setError('');
+      });
     }
   };
+
 
   return (
     <div className="game-view">

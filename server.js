@@ -14,29 +14,15 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 const PORT = process.env.PORT || 3000;
 const ROOM_CODE_LENGTH = 6;
-const RATE_LIMIT_MS = 200;
 
 const rooms = {};
-const rateLimiter = new Map();
 
 app.use(helmet());
 
 app.use(express.static(path.join(__dirname, 'swefall-client', 'dist')));
 
-const shuffleLocations = () => {
-
-    const shuffledLocations = [...locations];
-
-    for (let i = shuffledLocations.length - 1; i > 0; i--) {
-
-        const j = Math.floor(Math.random() * (i + 1));
-
-        [shuffledLocations[i], shuffledLocations[j]] = [shuffledLocations[j], shuffledLocations[i]];
-
-    }
-
-    return shuffledLocations;
-
+const shuffleLocations = (locations) => {
+    return locations.sort(() => 0.5 - Math.random());
 };
 
 const createRoom = () => {
@@ -44,7 +30,7 @@ const createRoom = () => {
     do {
         code = nanoid(ROOM_CODE_LENGTH).toUpperCase();
     } while (rooms[code]);
-    rooms[code] = { players: [], spy: null, locations: shuffleLocations(), locationIndex: 0 };
+    rooms[code] = { players: [], spy: null, locations: shuffleLocations(locations), locationIndex: 0 };
     return code;
 };
 
@@ -56,13 +42,12 @@ const handleLocationUpdate = (roomCode, eventName) => {
         return { error: 'No more locations left' };
     }
 
-    const spyIndex = Math.floor(Math.random() * room.players.length);
-    const spyPlayer = room.players[spyIndex];
-
     const location = room.locations[room.locationIndex];
     room.locationIndex++;
 
-    room.players.forEach((player, index) => {
+    const spyPlayer = room.players[Math.floor(Math.random() * room.players.length)];
+
+    room.players.forEach((player) => {
         const [swedish, english] = location.split('/');
         const isSpy = player.id === spyPlayer.id;
         const role = isSpy ? 'spion' : swedish;
@@ -77,37 +62,34 @@ const handleLocationUpdate = (roomCode, eventName) => {
 
 
 io.on('connection', (socket) => {
-    const rateLimit = () => {
-        const now = Date.now();
-        if (rateLimiter.has(socket.id) && now - rateLimiter.get(socket.id) < RATE_LIMIT_MS) {
-            socket.emit('error', 'Du går för fort! Sakta ner.');
-            return false;
-        }
-        rateLimiter.set(socket.id, now);
-        return true;
-    };
-
     socket.on('create-room', (callback) => {
-        if (!rateLimit()) return;
         const roomCode = createRoom();
         callback(roomCode);
     });
 
     socket.on('join-room', ({ roomCode, username, includeEnglish }, callback) => {
-        if (!rateLimit()) return;
-
         const room = rooms[roomCode];
         if (!room) return callback({ error: 'Rummet finns inte' });
 
-        room.players.push({ id: socket.id, username, includeEnglish });
-        socket.join(roomCode);
+        const existingPlayer = room.players.find((player) => player.id === socket.id);
+        const duplicateName = room.players.some(
+            (player) => player.username.toLowerCase() === username.toLowerCase()
+        );
+
+        if (duplicateName && !existingPlayer) {
+            return callback({ error: 'Namnet är redan taget' });
+        }
+
+        if (!existingPlayer) {
+            room.players.push({ id: socket.id, username, includeEnglish });
+            socket.join(roomCode);
+        }
+
         io.to(roomCode).emit('update-players', room.players);
         callback({ success: true });
     });
 
     socket.on('start-game', ({ roomCode }) => {
-        if (!rateLimit()) return;
-
         const room = rooms[roomCode];
         if (!room || room.players.length < 2) {
             return socket.emit('error', 'Det krävs minst 2 spelare för att starta');
@@ -117,23 +99,35 @@ io.on('connection', (socket) => {
     });
 
     socket.on('next-location', ({ roomCode }) => {
-        if (!rateLimit()) return;
         handleLocationUpdate(roomCode, 'location-updated');
     });
 
     socket.on('disconnect', () => {
-        for (const roomCode in rooms) {
+        Object.keys(rooms).forEach((roomCode) => {
             const room = rooms[roomCode];
-            room.players = room.players.filter((player) => player.id !== socket.id);
+            if (room) {
+                room.players = room.players.filter((player) => player.id !== socket.id);
+                io.to(roomCode).emit('update-players', room.players);
 
+                if (room.players.length === 0) {
+                    delete rooms[roomCode];
+                }
+            }
+        });
+    });
+
+    socket.on('leave-room', ({ roomCode }, callback) => {
+        const room = rooms[roomCode];
+        if (room) {
+            room.players = room.players.filter((player) => player.id !== socket.id);
+            socket.leave(roomCode);
+
+            io.to(roomCode).emit('update-players', room.players);
             if (room.players.length === 0) {
                 delete rooms[roomCode];
-            } else {
-                io.to(roomCode).emit('update-players', room.players);
             }
         }
-
-        rateLimiter.delete(socket.id);
+        callback({ success: true });
     });
 
     socket.on('error', (err) => {
