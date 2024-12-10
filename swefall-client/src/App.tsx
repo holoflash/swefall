@@ -107,10 +107,6 @@ const App: React.FC = () => {
     );
   };
 
-  const startGame = (roomCode: string) => {
-    socket.emit('start-game', { roomCode });
-  };
-
   const nextLocation = (roomCode: string) => {
     socket.emit('next-location', { roomCode });
   };
@@ -127,7 +123,7 @@ const App: React.FC = () => {
   };
 
   const handleStartGame = () => {
-    startGame(state.roomCode);
+    socket.emit('start-game', { roomCode: state.roomCode });
     localStorage.setItem('gameStarted', 'true');
   };
 

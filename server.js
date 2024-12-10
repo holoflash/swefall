@@ -80,6 +80,10 @@ io.on('connection', (socket) => {
             return callback({ error: 'Namnet är redan taget' });
         }
 
+        if (username == "") {
+            return callback({ error: 'Var god ange ett namn' });
+        }
+
         if (!existingPlayer) {
             room.players.push({ id: socket.id, username, includeEnglish });
             socket.join(roomCode);
@@ -99,6 +103,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('next-location', ({ roomCode }) => {
+        const room = rooms[roomCode];
+        if (!room || room.players.length < 2) {
+            return socket.emit('error', 'Det krävs minst 2 spelare för att spela');
+        }
         handleLocationUpdate(roomCode, 'location-updated');
     });
 
