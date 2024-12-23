@@ -1,0 +1,271 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend+Mega:wght@100..900&display=swap');
+
+:root {
+  --white: #fff;
+  --black: #000;
+  --background: #6164eb;
+  --wrapper: #fff;
+  --wrapper2: #73d0fe;
+  --wrapper3: #a37aff;
+  --roomCode: rgb(246, 70, 152);
+  --button: #febf22;
+  --sus: rgb(253, 88, 28);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  font-size: 100%;
+}
+
+h3 {
+  all: unset;
+  display: inline-block;
+  font-weight: 900;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Lexend Mega', sans-serif;
+  background-color: var(--background);
+  color: var(--black);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  gap: 1rem;
+  margin: 0;
+}
+
+.wrapper {
+  background-color: var(--wrapper);
+  filter: drop-shadow(0.2rem 0.2rem 0 var(--black));
+  padding: 1.5rem;
+  outline: solid 0.13rem var(--black);
+  border-radius: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  max-width: 40rem;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-direction: row-reverse;
+  width: 100%;
+}
+
+input[type="checkbox"] {
+  margin-left: 0.4rem;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+label {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--black);
+  user-select: none;
+  cursor: pointer;
+  border-radius: 0.4rem;
+}
+
+.title {
+  font-family: 'Lexend Mega', sans-serif;
+  font-weight: 900;
+  font-size: 5rem;
+  color: var(--black);
+  text-align: center;
+  margin-bottom: 1rem;
+  line-height: 1;
+  letter-spacing: -1.3rem;
+}
+
+.description {
+  font-size: 0.8rem;
+  font-family: monospace;
+  text-align: center;
+}
+
+.login-form {
+  width: 100%;
+  gap: 0.8rem;
+  background-color: var(--wrapper3);
+  border-radius: 0.8rem;
+}
+
+.game-view {
+  width: 100%;
+  gap: 1rem;
+  background-color: var(--wrapper2);
+}
+
+.action,
+.action-pending,
+.action-finished {
+  font-family: 'Lexend Mega', sans-serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  text-align: center;
+  padding: 1rem;
+  width: 100%;
+}
+
+.action-pending {
+  background-color: var(--wrapper3);
+  color: var(--white);
+}
+
+.action {
+  background-color: var(--sus);
+  color: var(--white);
+}
+
+.action-finished {
+  font-size: 1.2rem;
+}
+
+.player {
+  color: var(--white);
+}
+
+.game-buttons {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+.boss {
+  background-color: var(--background);
+  color: var(--white);
+}
+
+.time {
+  font-family: 'Lexend Mega', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.room-code-button {
+  background-color: var(--roomCode);
+  color: var(--white);
+  width: fit-content;
+  margin: auto;
+}
+
+.accuse-button {
+  background-color: var(--sus);
+  color: var(--white);
+  margin: auto;
+  padding: 0.3rem 1rem;
+  box-shadow: 0.2rem 0.2rem 0 var(--black);
+}
+
+.accuse-button:disabled {
+  background-color: var(--wrapper);
+  color: var(--black);
+  box-shadow: none;
+  cursor: default;
+}
+
+table {
+  border-collapse: collapse;
+  background-color: var(--wrapper);
+  filter: drop-shadow(0.2rem 0.2rem 0 var(--black));
+  outline: solid 0.13rem var(--black);
+  width: 100%;
+  table-layout: auto;
+}
+
+thead {
+  background-color: var(--wrapper3);
+}
+
+th,
+td {
+  font-family: 'Lexend Mega', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0.7rem;
+  text-align: center;
+  outline: solid 0.07rem var(--black);
+}
+
+button {
+  cursor: pointer;
+  text-transform: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overflow: visible;
+  display: inline-block;
+  padding: 0.8rem;
+  background-color: var(--button);
+  color: var(--black);
+  font-family: 'Lexend Mega', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  border: none;
+  border-radius: 0.8rem;
+  transition: color 0.05s, background-color 0.05s, box-shadow 0.05s ease, transform 0.05s ease;
+  box-shadow: 0.3rem 0.3rem 0 var(--black);
+  outline: solid 0.13rem var(--black);
+}
+
+@media (hover: hover) {
+  input:hover {
+    outline: solid var(--background) 0.13rem;
+  }
+
+  button:hover {
+    filter: brightness(105%);
+  }
+}
+
+button:not([disabled]):active {
+  box-shadow: none;
+  transform: translate(0.13rem, 0.13rem);
+}
+
+input {
+  font-family: monospace;
+  border: none;
+  border-radius: 0.8rem;
+  font-size: 0.9rem;
+  padding: 1rem;
+  outline: solid var(--black) 0.13rem;
+  width: 100%;
+}
+
+input:focus {
+  outline: solid var(--background) 0.13rem;
+}
+
+.error,
+.message {
+  font-family: monospace;
+  color: var(--wrapper2);
+  font-weight: bold;
+  position: absolute;
+  bottom: 0;
+  margin: 1rem;
+}
