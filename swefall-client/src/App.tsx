@@ -1,13 +1,38 @@
-import { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { io, Socket } from 'socket.io-client';
 import './styles.css';
 
+interface UserData {
+  name: string;
+  roomCode: string;
+  playing: boolean;
+  action: string;
+  players: Player[];
+  creator: boolean;
+  english: boolean;
+}
+
+interface Message {
+  error: string;
+  message: string;
+}
+
+interface Player {
+  name: string;
+  points?: number;
+  action?: string;
+  spy?: boolean;
+}
+
+interface NewActionData {
+  players: Player[];
+}
+
 const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:4000';
-const socket = io(URL, { autoConnect: false });
+const socket: Socket = io(URL, { autoConnect: false });
 
-export default function App() {
-
-  const initialUserData = {
+const App: React.FC = () => {
+  const initialUserData: UserData = {
     name: '',
     roomCode: '',
     playing: false,
@@ -17,94 +42,157 @@ export default function App() {
     english: false,
   };
 
-  const [userData, setUserData] = useState(initialUserData);
-  const [message, setMessage] = useState({ error: '', message: '' });
-  const [isConnected, setIsConnected] = useState(socket.connected);
-  const [roundOver, setRoundOver] = useState(false)
+  const [userData, setUserData] = useState<UserData>(initialUserData);
+  const [message, setMessage] = useState<Message>({ error: '', message: '' });
+  const [isConnected, setIsConnected] = useState<boolean>(socket.connected);
+  const [roundOver, setRoundOver] = useState<boolean>(false);
 
   const generateRoomCode = () => {
-    socket.emit('generate-room-code', (response) => {
+    socket.emit('generate-room-code', (response: { roomCode?: string }) => {
       if (response.roomCode) {
-        setUserData((prevData) => ({ ...prevData, roomCode: response.roomCode }));
-        setMessage({ error: '', message: userData.english ? 'Room code generated successfully!' : 'Rumskod genererades framgångsrikt!' });
+        setUserData((prevData) => {
+          return {
+            ...prevData,
+            roomCode: response.roomCode,
+          } as UserData;
+        });
+
+        setMessage({
+          error: '',
+          message: userData.english
+            ? 'Room code generated successfully!'
+            : 'Rumskod genererades framgångsrikt!',
+        });
       } else {
-        setMessage({ error: userData.english ? 'Failed to generate room code' : 'Misslyckades att generera rumskod', message: '' });
+        setMessage({
+          error: userData.english
+            ? 'Failed to generate room code'
+            : 'Misslyckades att generera rumskod',
+          message: '',
+        });
       }
     });
   };
 
   const getNewAction = async () => {
     try {
-      await new Promise((resolve, reject) => { // Await the promise
-        socket.emit('new-action', userData.roomCode, (data) => {
+      await new Promise<void>((resolve, reject) => {
+        socket.emit('new-action', userData.roomCode, (data: { success?: boolean; error?: string }) => {
           if (data.success) {
-            resolve(); // Resolve only on success
+            resolve();
           } else {
-            reject(new Error(data.error || (userData.english ? 'Failed to fetch a new action' : 'Misslyckades att hämta en ny handling')));
+            reject(
+              new Error(
+                data.error ||
+                (userData.english
+                  ? 'Failed to fetch a new action'
+                  : 'Misslyckades att hämta en ny handling')
+              )
+            );
           }
         });
       });
     } catch (error) {
-      setMessage({ error: error.message, message: '' });
+      setMessage({ error: (error as Error).message, message: '' });
     }
   };
 
   const leaveGame = () => {
-    socket.emit('leave-room', { name: userData.name, roomCode: userData.roomCode }, () => {
-      setUserData(initialUserData);
-      localStorage.removeItem('userData');
-      setMessage({ error: '', message: userData.english ? 'You have left the game' : 'Du har lämnat spelet' });
-      socket.disconnect();
-    });
+    socket.emit(
+      'leave-room',
+      { name: userData.name, roomCode: userData.roomCode },
+      () => {
+        setUserData(initialUserData);
+        localStorage.removeItem('userData');
+        setMessage({
+          error: '',
+          message: userData.english ? 'You have left the game' : 'Du har lämnat spelet',
+        });
+        socket.disconnect();
+      }
+    );
   };
 
-  const handleInputChange = (event) => {
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, type, value, checked } = event.target;
     setUserData((prevData) => ({ ...prevData, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handleGuess = (guessedPlayerName) => {
-    socket.emit('make-guess', { roomCode: userData.roomCode, guessedPlayerName: guessedPlayerName }, (response) => {
-      if (response.error) {
-        setMessage({ error: response.error, message: '' });
-      } else {
-        setMessage({ error: '', message: userData.english ? 'Your guess has been recorded!' : 'Din gissning har registrerats!' });
+  const handleGuess = (guessedPlayerName: string) => {
+    socket.emit(
+      'make-guess',
+      { roomCode: userData.roomCode, guessedPlayerName },
+      (response: { error?: string }) => {
+        if (response.error) {
+          setMessage({ error: response.error, message: '' });
+        } else {
+          setMessage({
+            error: '',
+            message: userData.english
+              ? 'Your guess has been recorded!'
+              : 'Din gissning har registrerats!',
+          });
+        }
       }
-    });
+    );
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     const { name, roomCode, english } = userData;
 
     if (!name || !roomCode) {
-      setMessage({ error: userData.english ? 'Name and room code are required.' : 'Namn och rumskod krävs.', message: '' });
+      setMessage({
+        error: userData.english
+          ? 'Name and room code are required.'
+          : 'Namn och rumskod krävs.',
+        message: '',
+      });
       return;
     }
 
-    socket.emit('join-game', { name, roomCode, english }, (response) => {
-      if (response.error) {
-        setMessage({ error: response.error, message: '' });
-      } else {
-        setUserData((prevData) => ({
-          ...prevData,
-          playing: true,
-          action: response.action,
-          players: response.players,
-          creator: response.creator,
-          id: response.id,
-        }));
-        setMessage({ error: '', message: userData.english ? 'Successfully joined the game!' : 'Du har gått med i spelet!' });
+    socket.emit(
+      'join-game',
+      { name, roomCode, english },
+      (response: {
+        error?: string;
+        action?: string;
+        players?: Player[];
+        creator?: boolean;
+        id?: string;
+      }) => {
+        if (response.error) {
+          setMessage({ error: response.error, message: '' });
+        } else {
+          setUserData((prevData) => ({
+            ...prevData,
+            playing: true,
+            action: response.action || '',
+            players: response.players || [],
+            creator: response.creator || false,
+          }));
+          setMessage({
+            error: '',
+            message: userData.english
+              ? 'Successfully joined the game!'
+              : 'Du har gått med i spelet!',
+          });
+        }
       }
-    });
+    );
   };
 
   const resetGame = () => {
-    socket.emit('new-game', userData.roomCode, (response) => {
+    socket.emit('new-game', userData.roomCode, (response: { error?: string }) => {
       if (response.error) {
         setMessage({ error: response.error, message: '' });
       } else {
-        setMessage({ error: '', message: userData.english ? 'Game reset successfully!' : 'Spelet har återställts!' });
+        setMessage({
+          error: '',
+          message: userData.english
+            ? 'Game reset successfully!'
+            : 'Spelet har återställts!',
+        });
       }
     });
   };
@@ -117,16 +205,17 @@ export default function App() {
   }, [message]);
 
   useEffect(() => {
-    const savedUserData = JSON.parse(localStorage.getItem('userData'));
-    if (savedUserData?.name && savedUserData?.roomCode) {
+    const savedUserData = localStorage.getItem('userData');
+    if (savedUserData) {
+      const parsedData: UserData = JSON.parse(savedUserData);
       setUserData((prevData) => ({
         ...prevData,
-        name: savedUserData.name,
-        roomCode: savedUserData.roomCode,
+        name: parsedData.name,
+        roomCode: parsedData.roomCode,
       }));
 
       socket.connect();
-      socket.emit('rejoin-game', savedUserData, (response) => {
+      socket.emit('rejoin-game', parsedData, (response: any) => {
         if (response.error) {
           setMessage({ error: response.error, message: '' });
         } else {
@@ -135,11 +224,15 @@ export default function App() {
             playing: true,
             players: response.players,
             creator: response.creator,
-            id: response.id,
             action: response.action,
           }));
           setRoundOver(response.roundOver);
-          setMessage({ error: '', message: userData.english ? 'Successfully rejoined the game!' : 'Du har återanslutit till spelet!' });
+          setMessage({
+            error: '',
+            message: userData.english
+              ? 'Successfully rejoined the game!'
+              : 'Du har återanslutit till spelet!',
+          });
         }
       });
     }
@@ -153,16 +246,17 @@ export default function App() {
 
   useEffect(() => {
     socket.connect();
-    socket.on('new-action', (data) => {
+    socket.on('new-action', (data: NewActionData) => {
       setUserData((prevData) => ({
         ...prevData,
-        players: data.players.map(player => ({
+        players: data.players.map((player: Player) => ({
           ...player,
           action: player.action,
           spy: player.spy || false,
         })),
       }));
     });
+
 
     socket.on('player-joined', (response) => {
       setUserData((prevData) => ({ ...prevData, players: response.players }));
@@ -370,3 +464,5 @@ export default function App() {
     </div >
   );
 }
+
+export default App;
