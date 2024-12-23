@@ -10,7 +10,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, 'swefall-client', 'dist')));
 
 const PORT = process.env.PORT || 4000;
 
