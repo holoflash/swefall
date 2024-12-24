@@ -46,7 +46,8 @@ body {
   align-items: center;
   padding: 1.5rem;
   gap: 1rem;
-  margin: 0;
+  margin: 0 auto;
+  max-width: 600px;
 }
 
 .wrapper {
@@ -58,6 +59,7 @@ body {
   display: flex;
   flex-direction: column;
   max-width: 40rem;
+  min-width: fit-content;
 }
 
 .checkbox {
@@ -88,18 +90,21 @@ label {
 .title {
   font-family: 'Lexend Mega', sans-serif;
   font-weight: 900;
-  font-size: 5rem;
+  font-size: 15vw;
+  letter-spacing: -1.2vw;
   color: var(--black);
   text-align: center;
-  margin-bottom: 1rem;
   line-height: 1;
-  letter-spacing: -1.3rem;
+  width: fit-content;
+  display: flex;
+  margin-bottom: 1rem;
 }
 
 .description {
   font-size: 0.8rem;
   font-family: monospace;
   text-align: center;
+  border-radius: 0.8rem;
 }
 
 .login-form {
@@ -251,7 +256,7 @@ input {
   border: none;
   border-radius: 0.8rem;
   font-size: 0.9rem;
-  padding: 1rem;
+  padding: 0.8rem;
   outline: solid var(--black) 0.13rem;
   width: 100%;
 }
@@ -263,9 +268,7 @@ input:focus {
 .error,
 .message {
   font-family: monospace;
-  color: var(--wrapper2);
+  color: var(--button);
   font-weight: bold;
-  position: absolute;
-  bottom: 0;
-  margin: 1rem;
+  font-size: 0.8rem;
 }

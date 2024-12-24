@@ -199,7 +199,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (message.error || message.message) {
-      const timer = setTimeout(() => setMessage({ error: '', message: '' }), 3000);
+      const timer = setTimeout(() => setMessage({ error: '', message: '' }), 1500);
       return () => clearTimeout(timer);
     }
   }, [message]);
@@ -320,14 +320,13 @@ const App: React.FC = () => {
     <div className='container'>
       {!userData.playing ? (
         <>
-          <div className='title'>SWEFALL</div>
+          <div className='title'>swefall</div>
           <div className='description wrapper'>
             {userData.english
               ? 'Welcome to SWEFALL!. Enter your name, enter or generate the room code, and click connect to start the game.'
               : 'Välkommen till SWEFALL! Ange ditt namn, skriv in eller generera rumskoden och tryck på anslut för att starta spelet.'
             }
           </div>
-
           <form onSubmit={handleSubmit} className='login-form wrapper' autoComplete='off'>
             <input
               type='text'
