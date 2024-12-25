@@ -1,38 +1,12 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import './styles.css';
 
-interface UserData {
-  name: string;
-  roomCode: string;
-  playing: boolean;
-  action: string;
-  players: Player[];
-  creator: boolean;
-  english: boolean;
-}
-
-interface Message {
-  error: string;
-  message: string;
-}
-
-interface Player {
-  name: string;
-  points?: number;
-  action?: string;
-  spy?: boolean;
-}
-
-interface NewActionData {
-  players: Player[];
-}
-
 const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:4000';
-const socket: Socket = io(URL, { autoConnect: false });
+const socket = io(URL, { autoConnect: false });
 
-const App: React.FC = () => {
-  const initialUserData: UserData = {
+const App = () => {
+  const initialUserData = {
     name: '',
     roomCode: '',
     playing: false,
@@ -42,21 +16,18 @@ const App: React.FC = () => {
     english: false,
   };
 
-  const [userData, setUserData] = useState<UserData>(initialUserData);
-  const [message, setMessage] = useState<Message>({ error: '', message: '' });
-  const [isConnected, setIsConnected] = useState<boolean>(socket.connected);
-  const [roundOver, setRoundOver] = useState<boolean>(false);
+  const [userData, setUserData] = useState(initialUserData);
+  const [message, setMessage] = useState({ error: '', message: '' });
+  const [isConnected, setIsConnected] = useState(socket.connected);
+  const [roundOver, setRoundOver] = useState(false);
 
   const generateRoomCode = () => {
-    socket.emit('generate-room-code', (response: { roomCode?: string }) => {
+    socket.emit('generate-room-code', (response) => {
       if (response.roomCode) {
-        setUserData((prevData) => {
-          return {
-            ...prevData,
-            roomCode: response.roomCode,
-          } as UserData;
-        });
-
+        setUserData((prevData) => ({
+          ...prevData,
+          roomCode: response.roomCode,
+        }));
         setMessage({
           error: '',
           message: userData.english
@@ -76,8 +47,8 @@ const App: React.FC = () => {
 
   const getNewAction = async () => {
     try {
-      await new Promise<void>((resolve, reject) => {
-        socket.emit('new-action', userData.roomCode, (data: { success?: boolean; error?: string }) => {
+      await new Promise((resolve, reject) => {
+        socket.emit('new-action', userData.roomCode, (data) => {
           if (data.success) {
             resolve();
           } else {
@@ -93,7 +64,7 @@ const App: React.FC = () => {
         });
       });
     } catch (error) {
-      setMessage({ error: (error as Error).message, message: '' });
+      setMessage({ error: error.message, message: '' });
     }
   };
 
@@ -113,16 +84,19 @@ const App: React.FC = () => {
     );
   };
 
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (event) => {
     const { name, type, value, checked } = event.target;
-    setUserData((prevData) => ({ ...prevData, [name]: type === 'checkbox' ? checked : value }));
+    setUserData((prevData) => ({
+      ...prevData,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
-  const handleGuess = (guessedPlayerName: string) => {
+  const handleGuess = (guessedPlayerName) => {
     socket.emit(
       'make-guess',
       { roomCode: userData.roomCode, guessedPlayerName },
-      (response: { error?: string }) => {
+      (response) => {
         if (response.error) {
           setMessage({ error: response.error, message: '' });
         } else {
@@ -137,7 +111,7 @@ const App: React.FC = () => {
     );
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
     const { name, roomCode, english } = userData;
 
@@ -154,13 +128,7 @@ const App: React.FC = () => {
     socket.emit(
       'join-game',
       { name, roomCode, english },
-      (response: {
-        error?: string;
-        action?: string;
-        players?: Player[];
-        creator?: boolean;
-        id?: string;
-      }) => {
+      (response) => {
         if (response.error) {
           setMessage({ error: response.error, message: '' });
         } else {
@@ -183,7 +151,7 @@ const App: React.FC = () => {
   };
 
   const resetGame = () => {
-    socket.emit('new-game', userData.roomCode, (response: { error?: string }) => {
+    socket.emit('new-game', userData.roomCode, (response) => {
       if (response.error) {
         setMessage({ error: response.error, message: '' });
       } else {
@@ -207,7 +175,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const savedUserData = localStorage.getItem('userData');
     if (savedUserData) {
-      const parsedData: UserData = JSON.parse(savedUserData);
+      const parsedData = JSON.parse(savedUserData);
       setUserData((prevData) => ({
         ...prevData,
         name: parsedData.name,
@@ -215,7 +183,7 @@ const App: React.FC = () => {
       }));
 
       socket.connect();
-      socket.emit('rejoin-game', parsedData, (response: any) => {
+      socket.emit('rejoin-game', parsedData, (response) => {
         if (response.error) {
           setMessage({ error: response.error, message: '' });
         } else {
@@ -239,24 +207,23 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (userData) {
-      localStorage.setItem("userData", JSON.stringify(userData));
+    if (userData && userData.name && userData.roomCode) {
+      localStorage.setItem('userData', JSON.stringify(userData));
     }
   }, [userData]);
 
   useEffect(() => {
     socket.connect();
-    socket.on('new-action', (data: NewActionData) => {
+    socket.on('new-action', (data) => {
       setUserData((prevData) => ({
         ...prevData,
-        players: data.players.map((player: Player) => ({
+        players: data.players.map((player) => ({
           ...player,
           action: player.action,
           spy: player.spy || false,
         })),
       }));
     });
-
 
     socket.on('player-joined', (response) => {
       setUserData((prevData) => ({ ...prevData, players: response.players }));
@@ -276,7 +243,12 @@ const App: React.FC = () => {
     socket.on('round-over', (response) => {
       setRoundOver(true);
       setUserData((prevData) => ({ ...prevData, players: response.players }));
-      setMessage({ error: '', message: userData.english ? 'Round over! Scores updated.' : 'Runda över! Poäng uppdaterade.' });
+      setMessage({
+        error: '',
+        message: userData.english
+          ? 'Round over! Scores updated.'
+          : 'Runda över! Poäng uppdaterade.',
+      });
     });
 
     socket.on('update-guess', (data) => {
@@ -291,17 +263,35 @@ const App: React.FC = () => {
         ...prevData,
         players: data.players,
       }));
-      setMessage({ error: '', message: userData.english ? 'Game has been reset!' : 'Spelet har återställts!' });
+      setMessage({
+        error: '',
+        message: userData.english
+          ? 'Game has been reset!'
+          : 'Spelet har återställts!',
+      });
     });
 
     socket.on('connect', () => {
-      setIsConnected(true)
+      setIsConnected(true);
     });
 
     socket.on('disconnect', () => {
-      setIsConnected(false)
-      setMessage({ error: userData.english ? 'Disconnected from server' : 'Frånkopplad från servern', message: '' });
+      setIsConnected(false);
+      setMessage({
+        error: userData.english
+          ? 'Disconnected from server'
+          : 'Frånkopplad från servern',
+        message: '',
+      });
     });
+
+    const handlePopState = () => {
+      if (userData && userData.name && userData.roomCode) {
+        socket.connect();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
       socket.off('new-action');
@@ -427,7 +417,7 @@ const App: React.FC = () => {
 
                     {!roundOver && userData.players.some(player => player.name !== userData.name && player.spy) && player.name !== userData.name && (
                       <button
-                        className="accuse-button"
+                        className={`accuse-button ${userData.players.find(p => p.name === userData.name)?.guess === player.name ? 'accused' : ''}`}
                         onClick={() => handleGuess(player.name)}
                         disabled={roundOver}
                       >

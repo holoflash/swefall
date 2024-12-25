@@ -177,6 +177,14 @@ label {
 }
 
 .accuse-button {
+  background-color: var(--wrapper);
+  color: var(--black);
+  margin: auto;
+  padding: 0.3rem 1rem;
+  box-shadow: 0.2rem 0.2rem 0 var(--black);
+}
+
+.accuse-button.accused {
   background-color: var(--sus);
   color: var(--white);
   margin: auto;

@@ -7,8 +7,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/socket.io': {
-        target: 'http://localhost:3000', // Backend server URL
-        ws: true, // Enable WebSocket proxying
+        target: 'http://localhost:4000',
+        ws: true,
       },
     },
   },

@@ -25,7 +25,7 @@ const rooms = {};
 io.on('connection', (socket) => {
     socket.on('generate-room-code', (callback) => {
         const roomCode = generateRandomString(6);
-        rooms[roomCode] = { players: [] };
+        rooms[roomCode] = { players: [], roundOver: false };
         callback({ roomCode });
     });
 
@@ -58,6 +58,7 @@ io.on('connection', (socket) => {
             players: room.players,
             creator,
             id: socket.id,
+            roundOver: room.roundOver,
         });
 
         socket.join(roomCode);
@@ -65,7 +66,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('rejoin-game', ({ name, roomCode }, callback) => {
-        console.log("Rejoined");
         const room = rooms[roomCode];
         if (!room) {
             callback({ error: 'Room does not exist' });
@@ -86,7 +86,7 @@ io.on('connection', (socket) => {
             creator: player.creator,
             id: socket.id,
             action: player.action || null,
-            roundOver: false,
+            roundOver: room.roundOver,
         });
 
         socket.to(roomCode).emit('player-rejoined', { name });
@@ -98,7 +98,7 @@ io.on('connection', (socket) => {
             return callback({ error: "Room does not exist" });
         }
 
-        if (room.players.length < 2) {
+        if (room.players.length < 1) {
             return callback({ error: "Not enough players to start the game!" })
         }
 
@@ -127,6 +127,7 @@ io.on('connection', (socket) => {
             })),
         });
         io.to(roomCode).emit('round-started');
+        room.roundOver = false;
 
         callback({ success: true });
     });
@@ -173,6 +174,7 @@ io.on('connection', (socket) => {
                 action: room.action,
             });
 
+            room.roundOver = true;
             room.players.forEach(player => {
                 player.guess = null;
             });
@@ -193,6 +195,7 @@ io.on('connection', (socket) => {
             player.guess = null;
         });
 
+        room.roundOver = false;
         io.to(roomCode).emit('game-reset', { players: room.players });
 
         callback({ success: true });
@@ -202,7 +205,7 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         if (room) {
             room.players = room.players.filter((player) => player.name !== name);
-            io.to(roomCode).emit('player-left-room', { name: name, players: room.players });
+            io.to(roomCode).emit('player-left-room', { name, players: room.players });
             socket.leave(roomCode);
             if (room.players.length === 0) {
                 delete rooms[roomCode];
@@ -211,6 +214,7 @@ io.on('connection', (socket) => {
         callback({ success: true });
     });
 
+
     socket.on('disconnect', () => {
         for (const roomCode in rooms) {
             const room = rooms[roomCode];
@@ -218,7 +222,6 @@ io.on('connection', (socket) => {
                 delete rooms[roomCode];
             }
         }
-        console.log("Disconnected:", socket.id);
     });
 });
 
