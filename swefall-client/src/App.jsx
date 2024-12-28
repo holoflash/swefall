@@ -12,12 +12,11 @@ const App = () => {
     playing: false,
     action: '',
     players: [],
-    creator: false,
-    english: false,
+    creator: false
   };
 
   const [userData, setUserData] = useState(initialUserData);
-  const [message, setMessage] = useState({ error: '', message: '' });
+  const [message, setMessage] = useState('');
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [roundOver, setRoundOver] = useState(false);
 
@@ -28,57 +27,27 @@ const App = () => {
           ...prevData,
           roomCode: response.roomCode,
         }));
-        setMessage({
-          error: '',
-          message: userData.english
-            ? 'Room code generated successfully!'
-            : 'Rumskod genererades framgångsrikt!',
-        });
+        setMessage('Rumskod genererades framgångsrikt!');
       } else {
-        setMessage({
-          error: userData.english
-            ? 'Failed to generate room code'
-            : 'Misslyckades att generera rumskod',
-          message: '',
-        });
+        setMessage('Misslyckades att generera rumskod');
       }
     });
   };
 
-  const getNewAction = async () => {
-    try {
-      await new Promise((resolve, reject) => {
-        socket.emit('new-action', userData.roomCode, (data) => {
-          if (data.success) {
-            resolve();
-          } else {
-            reject(
-              new Error(
-                data.error ||
-                (userData.english
-                  ? 'Failed to fetch a new action'
-                  : 'Misslyckades att hämta en ny handling')
-              )
-            );
-          }
-        });
-      });
-    } catch (error) {
-      setMessage({ error: error.message, message: '' });
-    }
+  const getNewAction = () => {
+    socket.emit('new-action', userData.roomCode, (response) => {
+      if (response.error) {
+        setMessage(response.error);
+      }
+    });
   };
 
   const leaveGame = () => {
-    socket.emit(
-      'leave-room',
-      { name: userData.name, roomCode: userData.roomCode },
+    socket.emit('leave-room', { name: userData.name, roomCode: userData.roomCode },
       () => {
         setUserData(initialUserData);
         localStorage.removeItem('userData');
-        setMessage({
-          error: '',
-          message: userData.english ? 'You have left the game' : 'Du har lämnat spelet',
-        });
+        setMessage('Du har lämnat spelet');
         socket.disconnect();
       }
     );
@@ -93,19 +62,12 @@ const App = () => {
   };
 
   const handleGuess = (guessedPlayerName) => {
-    socket.emit(
-      'make-guess',
-      { roomCode: userData.roomCode, guessedPlayerName },
+    socket.emit('make-guess', { roomCode: userData.roomCode, guessedPlayerName },
       (response) => {
         if (response.error) {
-          setMessage({ error: response.error, message: '' });
+          setMessage(response.error);
         } else {
-          setMessage({
-            error: '',
-            message: userData.english
-              ? 'Your guess has been recorded!'
-              : 'Din gissning har registrerats!',
-          });
+          setMessage('Din gissning har registrerats!');
         }
       }
     );
@@ -113,24 +75,17 @@ const App = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const { name, roomCode, english } = userData;
+    const { name, roomCode } = userData;
 
     if (!name || !roomCode) {
-      setMessage({
-        error: userData.english
-          ? 'Name and room code are required.'
-          : 'Namn och rumskod krävs.',
-        message: '',
-      });
+      setMessage('Namn och rumskod krävs');
       return;
     }
 
-    socket.emit(
-      'join-game',
-      { name, roomCode, english },
+    socket.emit('join-game', { name, roomCode },
       (response) => {
         if (response.error) {
-          setMessage({ error: response.error, message: '' });
+          setMessage(response.error);
         } else {
           setUserData((prevData) => ({
             ...prevData,
@@ -139,12 +94,7 @@ const App = () => {
             players: response.players || [],
             creator: response.creator || false,
           }));
-          setMessage({
-            error: '',
-            message: userData.english
-              ? 'Successfully joined the game!'
-              : 'Du har gått med i spelet!',
-          });
+          setMessage('Du har gått med i spelet!');
         }
       }
     );
@@ -153,21 +103,16 @@ const App = () => {
   const resetGame = () => {
     socket.emit('new-game', userData.roomCode, (response) => {
       if (response.error) {
-        setMessage({ error: response.error, message: '' });
+        setMessage(response.error);
       } else {
-        setMessage({
-          error: '',
-          message: userData.english
-            ? 'Game reset successfully!'
-            : 'Spelet har återställts!',
-        });
+        setMessage('Spelet har återställts!');
       }
     });
   };
 
   useEffect(() => {
-    if (message.error || message.message) {
-      const timer = setTimeout(() => setMessage({ error: '', message: '' }), 1500);
+    if (message !== '') {
+      const timer = setTimeout(() => setMessage(), 1500);
       return () => clearTimeout(timer);
     }
   }, [message]);
@@ -185,7 +130,7 @@ const App = () => {
       socket.connect();
       socket.emit('rejoin-game', parsedData, (response) => {
         if (response.error) {
-          setMessage({ error: response.error, message: '' });
+          setMessage(response.error);
         } else {
           setUserData((prevData) => ({
             ...prevData,
@@ -195,12 +140,7 @@ const App = () => {
             action: response.action,
           }));
           setRoundOver(response.roundOver);
-          setMessage({
-            error: '',
-            message: userData.english
-              ? 'Successfully rejoined the game!'
-              : 'Du har återanslutit till spelet!',
-          });
+          setMessage('Du har återanslutit till spelet!');
         }
       });
     }
@@ -227,28 +167,23 @@ const App = () => {
 
     socket.on('player-joined', (response) => {
       setUserData((prevData) => ({ ...prevData, players: response.players }));
-      setMessage({ error: '', message: `${response.name} just joined the game` });
+      setMessage(`${response.name} har anslutit sig till spelet`);
     });
 
     socket.on('player-left-room', (response) => {
       setUserData((prevData) => ({ ...prevData, players: response.players }));
-      setMessage({ error: '', message: `${response.name} just left the game` });
+      setMessage(`${response.name} har lämnat spelet`);
     });
 
     socket.on('round-started', () => {
-      setMessage({ error: '', message: userData.english ? 'Round started' : 'Rundan har börjat' });
+      setMessage('Rundan har börjat');
       setRoundOver(false);
     });
 
     socket.on('round-over', (response) => {
       setRoundOver(true);
       setUserData((prevData) => ({ ...prevData, players: response.players }));
-      setMessage({
-        error: '',
-        message: userData.english
-          ? 'Round over! Scores updated.'
-          : 'Runda över! Poäng uppdaterade.',
-      });
+      setMessage('Runda över! Poäng uppdaterade.');
     });
 
     socket.on('update-guess', (data) => {
@@ -263,12 +198,7 @@ const App = () => {
         ...prevData,
         players: data.players,
       }));
-      setMessage({
-        error: '',
-        message: userData.english
-          ? 'Game has been reset!'
-          : 'Spelet har återställts!',
-      });
+      setMessage('Spelet har återställts!');
     });
 
     socket.on('connect', () => {
@@ -277,21 +207,8 @@ const App = () => {
 
     socket.on('disconnect', () => {
       setIsConnected(false);
-      setMessage({
-        error: userData.english
-          ? 'Disconnected from server'
-          : 'Frånkopplad från servern',
-        message: '',
-      });
+      setMessage('Frånkopplad från servern');
     });
-
-    const handlePopState = () => {
-      if (userData && userData.name && userData.roomCode) {
-        socket.connect();
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
 
     return () => {
       socket.off('new-action');
@@ -312,10 +229,7 @@ const App = () => {
         <>
           <div className='title'>swefall</div>
           <div className='description wrapper'>
-            {userData.english
-              ? 'Welcome to SWEFALL!. Enter your name, enter or generate the room code, and click connect to start the game.'
-              : 'Välkommen till SWEFALL! Ange ditt namn, skriv in eller generera rumskoden och tryck på anslut för att starta spelet.'
-            }
+            Välkommen till SWEFALL! Ange ditt namn, skriv in eller generera rumskoden och tryck på anslut för att starta spelet.
           </div>
           <form onSubmit={handleSubmit} className='login-form wrapper' autoComplete='off'>
             <input
@@ -324,7 +238,7 @@ const App = () => {
               maxLength={10}
               value={userData.name}
               onChange={handleInputChange}
-              placeholder={userData.english ? 'Enter your name' : 'Skriv ditt namn'}
+              placeholder="Skriv ditt namn"
               required
             />
             <input
@@ -332,63 +246,54 @@ const App = () => {
               name='roomCode'
               value={userData.roomCode}
               onChange={handleInputChange}
-              placeholder={userData.english ? 'Enter room code' : 'Skriv rumskod'}
+              placeholder="Skriv rumskod"
               required
             />
-            <div className='checkbox'>
-              <label htmlFor="english">   {userData.english ? 'English' : 'Engelska'}</label>
-              <input
-                type="checkbox"
-                name="english"
-                id="english"
-                checked={userData.english}
-                onChange={handleInputChange}
-              />
-            </div>
             <div className='game-buttons'>
               <button type='button' onClick={generateRoomCode}>
-                {userData.english ? 'GENERATE CODE' : 'GENERERA KOD'}
+                GENERERA KOD
               </button>
-              <button type='submit'>{userData.english ? 'JOIN ROOM' : 'GÅ MED I RUMMET'}</button>
+              <button type='submit'>
+                GÅ MED I RUMMET
+              </button>
             </div>
           </form>
         </>
       ) : (
         <div className='game-view wrapper'>
           <button
-            title={userData.english ? 'Copy room code to clipboard' : 'Kopiera rumskod till urklipp'}
+            title="Kopiera rumskod till urklipp"
             className='room-code-button'
             onClick={() => {
               navigator.clipboard.writeText(userData.roomCode);
-              setMessage({ error: '', message: userData.english ? 'Code copied to clipboard' : 'Koden har kopierats till urklipp' });
-            }}
-          >
-            {userData.english ? `ROOM CODE: ${userData.roomCode}` : `RUMSKOD: ${userData.roomCode}`}
+              setMessage('Koden har kopierats till urklipp');
+            }}>
+            {`RUMSKOD: ${userData.roomCode}`}
           </button>
 
           <div>
             {roundOver && userData.players.some(player => player.action) && (
               <div className="action-finished wrapper">
                 <h3>
-                  {userData.players.find(player => player.spy)?.name || (userData.english ? "No Spy Found" : "Ingen spion hittad")}
-                  {userData.english ? ' was the spy!' : ' var spionen!'}
+                  {userData.players.find(player => player.spy).name}
+                  var spionen!
                 </h3>
-                <div>{userData.english ? 'The location was:' : 'Platsen var:'}</div>
+                <div>Platsen var:</div>
                 <h3>
-                  {userData.players.find(player => player.name === userData.name)?.action || (userData.english ? "No Action Found (You weren't the spy)" : "Ingen handling hittad (Du var inte spionen)")}
+                  {userData.players.find(player => player.name === userData.name).action}
                 </h3>
               </div>
             )}
 
             {!roundOver && userData.players.some(player => player.name === userData.name && player.spy) && (
               <div className='action wrapper'>
-                {userData.english ? 'You are the SPY' : 'Du är SPIONEN'}
+                Du är SPIONEN
               </div>
             )}
 
             {!roundOver && !userData.players.some(player => player.name === userData.name && player.spy) && (
               <div className='action-pending wrapper'>
-                {userData.players.find(player => player.name === userData.name)?.action || (userData.english ? "Get ready!" : "Gör dig redo!")}
+                {userData.players.find(player => player.name === userData.name)?.action || "Gör dig redo!"}
               </div>
             )}
           </div>
@@ -396,9 +301,9 @@ const App = () => {
           <table>
             <thead>
               <tr>
-                <th>{userData.english ? 'NAME' : 'NAMN'}</th>
-                <th>{userData.english ? 'POINTS' : 'POÄNG'}</th>
-                <th>{userData.english ? 'ACCUSE' : 'ANKLAGA'}</th>
+                <th>NAMN</th>
+                <th>POÄNG</th>
+                <th>ANKLAGA</th>
               </tr>
             </thead>
             <tbody>
@@ -408,11 +313,11 @@ const App = () => {
                   <td>{player.points}</td>
                   <td>
                     {player.name === userData.name && player.spy && (
-                      userData.english ? "You are the spy!" : "Du är spionen!"
+                      "Du är spionen!"
                     )}
 
                     {player.name === userData.name && !player.spy && (
-                      userData.english ? "YOU" : "DU"
+                      "DU"
                     )}
 
                     {!roundOver && userData.players.some(player => player.name !== userData.name && player.spy) && player.name !== userData.name && (
@@ -421,7 +326,7 @@ const App = () => {
                         onClick={() => handleGuess(player.name)}
                         disabled={roundOver}
                       >
-                        {userData.english ? 'SPY!' : 'SPION!'}
+                        SPION!
                       </button>
                     )}
                   </td>
@@ -434,22 +339,21 @@ const App = () => {
             {userData.creator && (
               <>
                 <button className="boss" onClick={getNewAction}>
-                  {userData.english ? 'NEW ROUND' : 'NY RUNDA'}
+                  NY RUNDA
                 </button>
                 <button className="boss" onClick={resetGame}>
-                  {userData.english ? 'NEW GAME' : 'NYTT SPEL'}
+                  NYTT SPEL
                 </button>
               </>
             )}
             <button onClick={leaveGame}>
-              {userData.english ? 'LEAVE GAME' : 'LÄMNA SPELET'}
+              LÄMNA SPELET
             </button>
           </div>
         </div>
       )
       }
-      {message.error && <div className='error'>{message.error}</div>}
-      {message.message && <div className='message'>{message.message}</div>}
+      {message && <div className='message'>{message}</div>}
     </div >
   );
 }
