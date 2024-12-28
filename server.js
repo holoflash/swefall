@@ -2,7 +2,6 @@ import express from 'express';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import path from 'path';
-import { locations } from './locations-se.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
@@ -31,13 +30,13 @@ io.on('connection', (socket) => {
 
     socket.on('join-game', ({ roomCode, name }, callback) => {
         if (!rooms[roomCode]) {
-            return callback({ error: "Rummet existerar inte" });
+            return callback({ errorKey: 'roomDoesNotExist' });
         }
 
         const room = rooms[roomCode];
 
         if (room.players.some((player) => player.name === name)) {
-            return callback({ error: "Namnet är upptaget" });
+            return callback({ errorKey: 'nameTaken' });
         }
 
         const creator = room.players.length === 0;
@@ -67,13 +66,13 @@ io.on('connection', (socket) => {
     socket.on('rejoin-game', ({ name, roomCode }, callback) => {
         const room = rooms[roomCode];
         if (!room) {
-            callback({ error: 'Rummet existerar inte' });
+            callback({ errorKey: 'roomDoesNotExist' });
             return;
         }
 
         const player = room.players.find((player) => player.name === name);
         if (!player) {
-            callback({ error: 'Spelaren finns inte i rummet' });
+            callback({ errorKey: 'playerNotFound' });
             return;
         }
 
@@ -91,20 +90,18 @@ io.on('connection', (socket) => {
         socket.to(roomCode).emit('player-rejoined', { name });
     });
 
-    socket.on('new-action', (roomCode, callback) => {
+    socket.on('new-action', (roomCode, randomLocation, callback) => {
         const room = rooms[roomCode];
         if (!room) {
-            return callback({ error: "Rummet existerar inte" });
+            return callback({ errorKey: 'roomDoesNotExist' });
         }
 
         if (room.players.length < 1) {
-            return callback({ error: "Inte tillräcklig med spelare för att starta!" })
+            return callback({ errorKey: 'notEnoughPlayers' });
         }
 
-        const randomAction = locations[Math.floor(Math.random() * locations.length)];
-
         room.players.forEach(player => {
-            player.action = randomAction.trim();
+            player.action = randomLocation;
             player.spy = false;
         });
 
@@ -126,15 +123,16 @@ io.on('connection', (socket) => {
         callback({ success: true });
     });
 
+
     socket.on('make-guess', ({ roomCode, guessedPlayerName }, callback) => {
         const room = rooms[roomCode];
         if (!room) {
-            return callback({ error: "Rummet existerar inte" });
+            return callback({ errorKey: 'roomDoesNotExist' });
         }
 
         const player = room.players.find(player => player.socketId === socket.id);
         if (!player) {
-            return callback({ error: "Spelaren hittades inte" });
+            return callback({ errorKey: 'playerNotFound' });
         }
 
         player.guess = guessedPlayerName;
@@ -186,7 +184,7 @@ io.on('connection', (socket) => {
     socket.on('new-game', (roomCode, callback) => {
         const room = rooms[roomCode];
         if (!room) {
-            return callback({ error: "Rummet existerar inte" });
+            return callback({ errorKey: 'roomDoesNotExist' });
         }
 
         room.players.forEach(player => {

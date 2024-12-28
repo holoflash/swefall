@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import './styles.css';
+import uiText from '../locations-en.json'
 
 const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:4000';
 const socket = io(URL, { autoConnect: false });
@@ -20,6 +21,14 @@ const App = () => {
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [roundOver, setRoundOver] = useState(false);
 
+  const getMessage = (key, replacements = {}) => {
+    let message = uiText.uiMessages[key] || `Message for key '${key}' not found.`;
+    Object.entries(replacements).forEach(([placeholder, value]) => {
+      message = message.replace(`{${placeholder}}`, value);
+    });
+    return message;
+  };
+
   const generateRoomCode = () => {
     socket.emit('generate-room-code', (response) => {
       if (response.roomCode) {
@@ -27,17 +36,19 @@ const App = () => {
           ...prevData,
           roomCode: response.roomCode,
         }));
-        setMessage('Rumskod genererades framgångsrikt!');
+        setMessage(getMessage('roomCodeGenerated'));
       } else {
-        setMessage('Misslyckades att generera rumskod');
+        setMessage(getMessage('roomCodeGenerationFailed'));
       }
     });
   };
 
   const getNewAction = () => {
-    socket.emit('new-action', userData.roomCode, (response) => {
-      if (response.error) {
-        setMessage(response.error);
+    const randomLocationNumber = Math.floor(Math.random() * Object.keys(uiText.locations).length) + 1;
+    const randomLocation = uiText.locations[randomLocationNumber];
+    socket.emit('new-action', userData.roomCode, randomLocation, (response) => {
+      if (response.errorKey) {
+        setMessage(getMessage(response.errorKey));
       }
     });
   };
@@ -47,27 +58,27 @@ const App = () => {
       () => {
         setUserData(initialUserData);
         localStorage.removeItem('userData');
-        setMessage('Du har lämnat spelet');
+        setMessage(getMessage('leftGame'));
         socket.disconnect();
       }
     );
   };
 
   const handleInputChange = (event) => {
-    const { name, type, value, checked } = event.target;
+    const { name, value } = event.target;
     setUserData((prevData) => ({
       ...prevData,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
   };
 
   const handleGuess = (guessedPlayerName) => {
     socket.emit('make-guess', { roomCode: userData.roomCode, guessedPlayerName },
       (response) => {
-        if (response.error) {
-          setMessage(response.error);
+        if (response.errorKey) {
+          setMessage(getMessage(response.errorKey));
         } else {
-          setMessage('Din gissning har registrerats!');
+          setMessage(getMessage('guessRegistered'));
         }
       }
     );
@@ -78,14 +89,14 @@ const App = () => {
     const { name, roomCode } = userData;
 
     if (!name || !roomCode) {
-      setMessage('Namn och rumskod krävs');
+      setMessage(getMessage('nameAndRoomCodeRequired'));
       return;
     }
 
     socket.emit('join-game', { name, roomCode },
       (response) => {
-        if (response.error) {
-          setMessage(response.error);
+        if (response.errorKey) {
+          setMessage(getMessage(response.errorKey));
         } else {
           setUserData((prevData) => ({
             ...prevData,
@@ -94,7 +105,7 @@ const App = () => {
             players: response.players || [],
             creator: response.creator || false,
           }));
-          setMessage('Du har gått med i spelet!');
+          setMessage(getMessage('joinedGame'));
         }
       }
     );
@@ -105,7 +116,7 @@ const App = () => {
       if (response.error) {
         setMessage(response.error);
       } else {
-        setMessage('Spelet har återställts!');
+        setMessage(getMessage('gameReset'));
       }
     });
   };
@@ -167,23 +178,23 @@ const App = () => {
 
     socket.on('player-joined', (response) => {
       setUserData((prevData) => ({ ...prevData, players: response.players }));
-      setMessage(`${response.name} har anslutit sig till spelet`);
+      setMessage(getMessage('playerJoined', { name: response.name }));
     });
 
     socket.on('player-left-room', (response) => {
       setUserData((prevData) => ({ ...prevData, players: response.players }));
-      setMessage(`${response.name} har lämnat spelet`);
+      setMessage(getMessage('playerLeft', { name: response.name }));
     });
 
     socket.on('round-started', () => {
-      setMessage('Rundan har börjat');
+      setMessage(getMessage('roundStarted'));
       setRoundOver(false);
     });
 
     socket.on('round-over', (response) => {
       setRoundOver(true);
       setUserData((prevData) => ({ ...prevData, players: response.players }));
-      setMessage('Runda över! Poäng uppdaterade.');
+      setMessage(getMessage('roundOver'));
     });
 
     socket.on('update-guess', (data) => {
@@ -207,7 +218,7 @@ const App = () => {
 
     socket.on('disconnect', () => {
       setIsConnected(false);
-      setMessage('Frånkopplad från servern');
+      setMessage(getMessage('disconnected'));
     });
 
     return () => {
@@ -227,10 +238,8 @@ const App = () => {
     <div className='container'>
       {!userData.playing ? (
         <>
-          <div className='title'>swefall</div>
-          <div className='description wrapper'>
-            Välkommen till SWEFALL! Ange ditt namn, skriv in eller generera rumskoden och tryck på anslut för att starta spelet.
-          </div>
+          <div className='title'>{uiText.ui.title}</div>
+          <div className='description wrapper'>{uiText.ui.welcome}</div>
           <form onSubmit={handleSubmit} className='login-form wrapper' autoComplete='off'>
             <input
               type='text'
@@ -238,7 +247,7 @@ const App = () => {
               maxLength={10}
               value={userData.name}
               onChange={handleInputChange}
-              placeholder="Skriv ditt namn"
+              placeholder={uiText.ui.namePlaceholder}
               required
             />
             <input
@@ -246,15 +255,15 @@ const App = () => {
               name='roomCode'
               value={userData.roomCode}
               onChange={handleInputChange}
-              placeholder="Skriv rumskod"
+              placeholder={uiText.ui.roomCodePlaceholder}
               required
             />
             <div className='game-buttons'>
               <button type='button' onClick={generateRoomCode}>
-                GENERERA KOD
+                {uiText.ui.generateCodeButton}
               </button>
               <button type='submit'>
-                GÅ MED I RUMMET
+                {uiText.ui.joinRoomButton}
               </button>
             </div>
           </form>
@@ -262,11 +271,11 @@ const App = () => {
       ) : (
         <div className='game-view wrapper'>
           <button
-            title="Kopiera rumskod till urklipp"
+            title={uiText.ui.copyRoomCode}
             className='room-code-button'
             onClick={() => {
               navigator.clipboard.writeText(userData.roomCode);
-              setMessage('Koden har kopierats till urklipp');
+              setMessage(uiText.ui.roomCodeCopied);
             }}>
             {`RUMSKOD: ${userData.roomCode}`}
           </button>
@@ -275,10 +284,9 @@ const App = () => {
             {roundOver && userData.players.some(player => player.action) && (
               <div className="action-finished wrapper">
                 <h3>
-                  {userData.players.find(player => player.spy).name}
-                  var spionen!
+                  {userData.players.find(player => player.spy).name} {uiText.ui.spyWas}
                 </h3>
-                <div>Platsen var:</div>
+                <div>{uiText.ui.locationWas}</div>
                 <h3>
                   {userData.players.find(player => player.name === userData.name).action}
                 </h3>
@@ -287,13 +295,13 @@ const App = () => {
 
             {!roundOver && userData.players.some(player => player.name === userData.name && player.spy) && (
               <div className='action wrapper'>
-                Du är SPIONEN
+                {uiText.ui.isSpy}
               </div>
             )}
 
             {!roundOver && !userData.players.some(player => player.name === userData.name && player.spy) && (
               <div className='action-pending wrapper'>
-                {userData.players.find(player => player.name === userData.name)?.action || "Gör dig redo!"}
+                {userData.players.find(player => player.name === userData.name)?.action || uiText.ui.getReady}
               </div>
             )}
           </div>
@@ -301,9 +309,9 @@ const App = () => {
           <table>
             <thead>
               <tr>
-                <th>NAMN</th>
-                <th>POÄNG</th>
-                <th>ANKLAGA</th>
+                <th>{uiText.ui.nameHeader}</th>
+                <th>{uiText.ui.pointsHeader}</th>
+                <th>{uiText.ui.accuseHeader}</th>
               </tr>
             </thead>
             <tbody>
@@ -313,11 +321,11 @@ const App = () => {
                   <td>{player.points}</td>
                   <td>
                     {player.name === userData.name && player.spy && (
-                      "Du är spionen!"
+                      uiText.ui.youAreSpy
                     )}
 
                     {player.name === userData.name && !player.spy && (
-                      "DU"
+                      uiText.ui.you
                     )}
 
                     {!roundOver && userData.players.some(player => player.name !== userData.name && player.spy) && player.name !== userData.name && (
@@ -326,7 +334,7 @@ const App = () => {
                         onClick={() => handleGuess(player.name)}
                         disabled={roundOver}
                       >
-                        SPION!
+                        {uiText.ui.accuseSpy}
                       </button>
                     )}
                   </td>
@@ -339,23 +347,22 @@ const App = () => {
             {userData.creator && (
               <>
                 <button className="boss" onClick={getNewAction}>
-                  NY RUNDA
+                  {uiText.ui.newRoundButton}
                 </button>
                 <button className="boss" onClick={resetGame}>
-                  NYTT SPEL
+                  {uiText.ui.newGameButton}
                 </button>
               </>
             )}
             <button onClick={leaveGame}>
-              LÄMNA SPELET
+              {uiText.ui.leaveGameButton}
             </button>
           </div>
         </div>
-      )
-      }
+      )}
       {message && <div className='message'>{message}</div>}
-    </div >
+    </div>
   );
-}
+};
 
 export default App;
