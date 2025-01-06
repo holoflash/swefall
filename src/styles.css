@@ -21,6 +21,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
@@ -225,9 +227,6 @@ td {
 button {
   cursor: pointer;
   text-transform: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
   overflow: visible;
   display: inline-block;
   padding: 0.8rem;
