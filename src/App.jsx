@@ -162,6 +162,7 @@ const App = () => {
         getMessage(setMessages, response.errorKey);
       }
     });
+    console.log(userData)
   };
 
   useEffect(() => {
@@ -236,12 +237,12 @@ const App = () => {
       getMessage(setMessages, 'roundOver');
     });
 
-    socket.on('update-guess', (data) => {
-      updateUserData({ players: data.players });
+    socket.on('update-guess', (response) => {
+      updateUserData({ players: response.players });
     });
 
-    socket.on('game-reset', (data) => {
-      updateUserData({ players: data.players });
+    socket.on('game-reset', (response) => {
+      updateUserData({ players: response.players });
       getMessage(setMessages, 'gameReset');
     });
 
@@ -317,7 +318,8 @@ const App = () => {
           </button>
 
           <div>
-            {roundOver && userData.players.some((player) => player.name) && (
+
+            {roundOver && userData.players.some((player) => player.guess) && (
               <div className="action-finished wrapper">
                 <h3>
                   {userData.players.find((player) => player.spy).name} {uiText.spyWas}
@@ -339,6 +341,7 @@ const App = () => {
                   uiText.getReady}
               </div>
             )}
+
           </div>
 
           <table>

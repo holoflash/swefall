@@ -198,6 +198,7 @@ io.on('connection', (socket) => {
         });
 
         room.roundOver = false;
+
         io.to(roomCode).emit('game-reset', { players: room.players });
 
         callback({ success: true });
