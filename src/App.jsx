@@ -40,7 +40,18 @@ const App = () => {
       return availableLanguages[nextLanguageIndex];
     });
   };
-
+  useEffect(() => {
+    updateUserData({
+      randomLocationNumber: userData.randomLocationNumber,
+      players: userData.players.map((player) => ({
+        ...player,
+        action: player.spy
+          ? uiText.isSpy
+          : locations[userData.randomLocationNumber],
+        spy: player.spy || false,
+      })),
+    });
+  }, [language, locations]);
 
   const getMessage = (setMessages, key, replacements = {}) => {
     let newMessage = uiMessages[key] || `Message for key '${key}' not found.`;
@@ -306,14 +317,14 @@ const App = () => {
           </button>
 
           <div>
-            {roundOver && (
+            {roundOver && userData.players.some((player) => player.name) && (
               <div className="action-finished wrapper">
                 <h3>
                   {userData.players.find((player) => player.spy).name} {uiText.spyWas}
                 </h3>
-                <div>{`${uiText.locationWas} ${locations[userData.randomLocationNumber]}`}</div>
+                <div>{uiText.locationWas} </div>
                 <h3>
-                  {userData.players.find((player) => player.name === userData.name).action}
+                  {locations[userData.randomLocationNumber]}
                 </h3>
               </div>
             )}

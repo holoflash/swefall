@@ -20,6 +20,7 @@
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  user-select: none;
 }
 
 html {
@@ -82,7 +83,6 @@ label {
   font-family: monospace;
   font-size: 0.9rem;
   color: var(--black);
-  user-select: none;
   cursor: pointer;
   border-radius: 0.4rem;
 }
@@ -244,11 +244,6 @@ button {
   outline: solid 0.13rem var(--black);
 }
 
-.language {
-  all: unset;
-  cursor: pointer;
-  font-size: 2rem;
-}
 
 @media (hover: hover) {
   input:hover {
@@ -260,9 +255,15 @@ button {
   }
 }
 
-button:not([disabled]):active {
+button:not([disabled], .language):active {
   box-shadow: none;
   transform: translate(0.13rem, 0.13rem);
+}
+
+.language {
+  all: unset;
+  cursor: pointer;
+  font-size: 2rem;
 }
 
 input {
