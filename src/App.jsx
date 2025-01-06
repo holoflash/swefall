@@ -11,14 +11,15 @@ const App = () => {
   const initialUserData = {
     name: '',
     roomCode: '',
-    playing: false,
+    inGame: false,
+    roundOver: true,
+    gameInProgress: false,
     players: [],
     creator: false,
   };
 
   const [userData, setUserData] = useState(initialUserData);
   const [isConnected, setIsConnected] = useState(socket.connected);
-  const [roundOver, setRoundOver] = useState(false);
   const [messages, setMessages] = useState([]);
 
   const defaultLanguage = 'english';
@@ -40,6 +41,7 @@ const App = () => {
       return availableLanguages[nextLanguageIndex];
     });
   };
+
   useEffect(() => {
     updateUserData({
       randomLocationNumber: userData.randomLocationNumber,
@@ -77,6 +79,10 @@ const App = () => {
     }));
   };
 
+  useEffect(() => {
+    console.log("roundOver:", userData.roundOver, "gameinprogres", userData.gameInProgress);
+  }, [userData.roundOver]);
+
   const generateRoomCode = () => {
     const roomCode = generateRandomString(6);
 
@@ -86,6 +92,39 @@ const App = () => {
         getMessage(setMessages, 'roomCodeGenerated');
       } else {
         getMessage(setMessages, response.errorKey);
+      }
+    });
+  };
+
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    if (name === 'roomCode') {
+      updateUserData({ [name]: value.toUpperCase() });
+    } else {
+      updateUserData({ [name]: value });
+    }
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const { name, roomCode } = userData;
+
+    if (!name || !roomCode) {
+      getMessage(setMessages, 'nameAndRoomCodeRequired');
+      return;
+    }
+
+    socket.emit('join-game', { name, roomCode }, (response) => {
+      if (response.errorKey) {
+        getMessage(setMessages, response.errorKey);
+      } else {
+        updateUserData({
+          inGame: true,
+          players: response.players || [],
+          creator: response.creator || false,
+        });
+        getMessage(setMessages, 'joinedGame');
       }
     });
   };
@@ -111,16 +150,6 @@ const App = () => {
     );
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    if (name === 'roomCode') {
-      updateUserData({ [name]: value.toUpperCase() });
-    } else {
-      updateUserData({ [name]: value });
-    }
-  };
-
-
   const handleGuess = (guessedPlayerName) => {
     socket.emit('make-guess', { roomCode: userData.roomCode, guessedPlayerName },
       (response) => {
@@ -133,36 +162,12 @@ const App = () => {
     );
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const { name, roomCode } = userData;
-
-    if (!name || !roomCode) {
-      getMessage(setMessages, 'nameAndRoomCodeRequired');
-      return;
-    }
-
-    socket.emit('join-game', { name, roomCode }, (response) => {
-      if (response.errorKey) {
-        getMessage(setMessages, response.errorKey);
-      } else {
-        updateUserData({
-          playing: true,
-          players: response.players || [],
-          creator: response.creator || false,
-        });
-        getMessage(setMessages, 'joinedGame');
-      }
-    });
-  };
-
   const resetGame = () => {
     socket.emit('new-game', userData.roomCode, (response) => {
       if (response.errorKey) {
         getMessage(setMessages, response.errorKey);
       }
     });
-    console.log(userData)
   };
 
   useEffect(() => {
@@ -172,6 +177,8 @@ const App = () => {
       updateUserData({
         name: parsedData.name,
         roomCode: parsedData.roomCode,
+        roundOver: parsedData.roundOver,
+        gameInProgress: parsedData.gameInProgress,
       });
 
       socket.connect();
@@ -180,12 +187,11 @@ const App = () => {
           getMessage(setMessages, response.errorKey);
         } else {
           updateUserData({
-            playing: true,
+            inGame: true,
             players: response.players,
             creator: response.creator,
             randomLocationNumber: response.randomLocationNumber
           });
-          setRoundOver(response.roundOver);
           getMessage(setMessages, 'reconnected');
         }
       });
@@ -203,6 +209,8 @@ const App = () => {
 
     socket.on('new-action', (response) => {
       updateUserData({
+        gameInProgress: true,
+        roundOver: false,
         randomLocationNumber: response.randomLocationNumber,
         players: response.players.map((player) => ({
           ...player,
@@ -215,25 +223,34 @@ const App = () => {
     });
 
     socket.on('player-joined', (response) => {
-      updateUserData({ players: response.players, randomLocationNumber: response.randomLocationNumber });
+      updateUserData({
+        gameInProgress: false,
+        roundOver: true,
+        players: response.players,
+      });
       if (userData.name !== response.name) {
         getMessage(setMessages, 'playerJoined', { name: response.name })
       };
     });
 
     socket.on('player-left-room', (response) => {
-      updateUserData({ players: response.players });
+      updateUserData({
+        gameInProgress: false,
+        roundOver: true,
+        players: response.players,
+      });
       getMessage(setMessages, 'playerLeft', { name: response.name });
     });
 
     socket.on('round-started', () => {
       getMessage(setMessages, 'roundStarted');
-      setRoundOver(false);
     });
 
     socket.on('round-over', (response) => {
-      setRoundOver(true);
-      updateUserData({ players: response.players });
+      updateUserData({
+        roundOver: true,
+        players: response.players
+      });
       getMessage(setMessages, 'roundOver');
     });
 
@@ -242,7 +259,11 @@ const App = () => {
     });
 
     socket.on('game-reset', (response) => {
-      updateUserData({ players: response.players });
+      updateUserData({
+        roundOver: true,
+        gameInProgress: false,
+        players: response.players
+      });
       getMessage(setMessages, 'gameReset');
     });
 
@@ -273,7 +294,7 @@ const App = () => {
       <button onClick={toggleLanguage} className='language'>
         {flag}
       </button>
-      {!userData.playing ? (
+      {!userData.inGame ? (
         <>
           <div className='title'>{uiText.title}</div>
           <div className='description wrapper'>{uiText.welcome}</div>
@@ -318,8 +339,7 @@ const App = () => {
           </button>
 
           <div>
-
-            {roundOver && userData.players.some((player) => player.guess) && (
+            {userData.roundOver && userData.gameInProgress && (
               <div className="action-finished wrapper">
                 <h3>
                   {userData.players.find((player) => player.spy).name} {uiText.spyWas}
@@ -331,17 +351,21 @@ const App = () => {
               </div>
             )}
 
-            {!roundOver && userData.players.some((player) => player.name === userData.name && player.spy) && (
-              <div className="action wrapper">{uiText.isSpy}</div>
-            )}
-
-            {!roundOver && !userData.players.some((player) => player.name === userData.name && player.spy) && (
+            {userData.roundOver && !userData.gameInProgress && (
               <div className="action-pending wrapper">
-                {userData.players.find((player) => player.name === userData.name)?.action ||
-                  uiText.getReady}
+                {uiText.getReady}
               </div>
             )}
 
+            {!userData.roundOver && userData.players.some((player) => player.name === userData.name && player.spy) && (
+              <div className="action wrapper">{uiText.isSpy}</div>
+            )}
+
+            {!userData.roundOver && !userData.players.some((player) => player.name === userData.name && player.spy) && (
+              <div className="action-pending wrapper">
+                {locations[userData.randomLocationNumber]}
+              </div>
+            )}
           </div>
 
           <table>
@@ -366,11 +390,11 @@ const App = () => {
                       uiText.you
                     )}
 
-                    {!roundOver && userData.players.some(player => player.name !== userData.name && player.spy) && player.name !== userData.name && (
+                    {!userData.roundOver && userData.players.some(player => player.name !== userData.name && player.spy) && player.name !== userData.name && (
                       <button
                         className={`accuse-button ${userData.players.find(p => p.name === userData.name)?.guess === player.name ? 'accused' : ''}`}
                         onClick={() => handleGuess(player.name)}
-                        disabled={roundOver}
+                        disabled={userData.roundOver}
                       >
                         {uiText.accuseSpy}
                       </button>
@@ -397,7 +421,8 @@ const App = () => {
             </button>
           </div>
         </div>
-      )}
+      )
+      }
       <div className='messages'>
         {messages.map((msg) => (
           <div key={msg.id} className='message'>
@@ -405,7 +430,7 @@ const App = () => {
           </div>
         ))}
       </div>
-    </div>
+    </div >
   );
 };
 

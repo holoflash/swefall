@@ -42,11 +42,15 @@ io.on('connection', (socket) => {
         const newPlayer = { name, socketId: socket.id, creator: room.players.length === 0, points: 0, guess: null, spy: false };
         room.players.push(newPlayer);
         socket.join(roomCode);
+        room.players.forEach((player) => {
+            player.action = null;
+            player.spy = false;
+            player.guess = null;
+        });
 
         callback({
             success: true,
             players: room.players,
-            roundOver: room.roundOver,
             randomLocationNumber: room.randomLocationNumber,
             creator: newPlayer.creator,
             id: socket.id,
@@ -72,7 +76,6 @@ io.on('connection', (socket) => {
         callback({
             success: true,
             players: room.players,
-            roundOver: room.roundOver,
             randomLocationNumber: room.randomLocationNumber,
             creator: player.creator,
             id: socket.id,
@@ -81,7 +84,7 @@ io.on('connection', (socket) => {
         socket.to(roomCode).emit('player-rejoined', { name });
     });
 
-    socket.on('new-action', (roomCode, randomLocationNumber, callback) => {
+    socket.on('new-action', (roomCode, randomLocationNumber) => {
         const room = rooms[roomCode];
         if (!room) {
             return callback({ errorKey: 'roomDoesNotExist' });
@@ -94,22 +97,17 @@ io.on('connection', (socket) => {
         room.players.forEach((player) => {
             player.action = null;
             player.spy = false;
+            player.guess = null;
         });
 
-        const randomSpyIndex = Math.floor(Math.random() * room.players.length);
-        const spyPlayer = room.players[randomSpyIndex];
-        spyPlayer.spy = true;
-
+        room.players[Math.floor(Math.random() * room.players.length)].spy = true;
         room.randomLocationNumber = randomLocationNumber;
 
         io.to(roomCode).emit('new-action', {
+            roundOver: false,
             randomLocationNumber,
             players: room.players,
         });
-
-        io.to(roomCode).emit('round-started');
-        room.roundOver = false;
-        callback({ success: true });
     });
 
     socket.on('round-over', (roomCode, callback) => {
@@ -117,8 +115,6 @@ io.on('connection', (socket) => {
         if (!room) {
             return callback({ errorKey: 'roomDoesNotExist' });
         }
-
-        room.roundOver = true;
 
         io.to(roomCode).emit('round-over', {
             randomLocationNumber: room.randomLocationNumber,
@@ -176,7 +172,6 @@ io.on('connection', (socket) => {
                 players: room.players,
             });
 
-            room.roundOver = true;
             room.players.forEach(player => {
                 player.guess = null;
             });
@@ -197,8 +192,6 @@ io.on('connection', (socket) => {
             player.guess = null;
         });
 
-        room.roundOver = false;
-
         io.to(roomCode).emit('game-reset', { players: room.players });
 
         callback({ success: true });
@@ -208,6 +201,13 @@ io.on('connection', (socket) => {
         const room = rooms[roomCode];
         if (room) {
             room.players = room.players.filter((player) => player.name !== name);
+
+            room.players.forEach((player) => {
+                player.action = null;
+                player.spy = false;
+                player.guess = null;
+            });
+
             io.to(roomCode).emit('player-left-room', { name, players: room.players });
             socket.leave(roomCode);
             if (room.players.length === 0) {
