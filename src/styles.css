@@ -244,6 +244,12 @@ button {
   outline: solid 0.13rem var(--black);
 }
 
+.language {
+  all: unset;
+  cursor: pointer;
+  font-size: 2rem;
+}
+
 @media (hover: hover) {
   input:hover {
     outline: solid var(--background) 0.13rem;
@@ -273,10 +279,17 @@ input:focus {
   outline: solid var(--background) 0.13rem;
 }
 
-.error,
+.messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
 .message {
   font-family: monospace;
   color: var(--button);
   font-weight: bold;
   font-size: 0.8rem;
+  text-align: center;
 }

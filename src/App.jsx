@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import './styles.css';
-import uiText from '../locations-en.json'
+import { generateRandomString } from './utils/generateRandomString';
+import languages from './data/languages.json'
 
 const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:4000';
 const socket = io(URL, { autoConnect: false });
@@ -11,44 +12,79 @@ const App = () => {
     name: '',
     roomCode: '',
     playing: false,
-    action: '',
     players: [],
-    creator: false
+    creator: false,
   };
 
   const [userData, setUserData] = useState(initialUserData);
-  const [message, setMessage] = useState('');
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [roundOver, setRoundOver] = useState(false);
+  const [messages, setMessages] = useState([]);
 
-  const getMessage = (key, replacements = {}) => {
-    let message = uiText.uiMessages[key] || `Message for key '${key}' not found.`;
-    Object.entries(replacements).forEach(([placeholder, value]) => {
-      message = message.replace(`{${placeholder}}`, value);
+  const defaultLanguage = 'english';
+  const [language, setLanguage] = useState(() => {
+    const storedLanguage = localStorage.getItem('language');
+    return storedLanguage || defaultLanguage;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('language', language);
+  }, [language]);
+
+  const { flag, uiText, locations, uiMessages } = languages[language] || languages[defaultLanguage];
+
+  const toggleLanguage = () => {
+    setLanguage((prevLanguage) => {
+      const availableLanguages = Object.keys(languages);
+      const nextLanguageIndex = (availableLanguages.indexOf(prevLanguage) + 1) % availableLanguages.length;
+      return availableLanguages[nextLanguageIndex];
     });
-    return message;
+  };
+
+
+  const getMessage = (setMessages, key, replacements = {}) => {
+    let newMessage = uiMessages[key] || `Message for key '${key}' not found.`;
+    Object.entries(replacements).forEach(([placeholder, value]) => {
+      newMessage = newMessage.replace(`{${placeholder}}`, value);
+    });
+
+    const messageObject = { id: `${Date.now()}-${Math.random()}`, text: newMessage };
+
+    setMessages((prevMessages) => [...prevMessages, messageObject]);
+
+    setTimeout(() => {
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.id !== messageObject.id)
+      );
+    }, 1500);
+  };
+
+  const updateUserData = (updates) => {
+    setUserData((prevData) => ({
+      ...prevData,
+      ...updates,
+    }));
   };
 
   const generateRoomCode = () => {
-    socket.emit('generate-room-code', (response) => {
-      if (response.roomCode) {
-        setUserData((prevData) => ({
-          ...prevData,
-          roomCode: response.roomCode,
-        }));
-        setMessage(getMessage('roomCodeGenerated'));
+    const roomCode = generateRandomString(6);
+
+    socket.emit('generate-room-code', { roomCode }, (response) => {
+      if (response.success) {
+        updateUserData({ roomCode });
+        getMessage(setMessages, 'roomCodeGenerated');
       } else {
-        setMessage(getMessage('roomCodeGenerationFailed'));
+        getMessage(setMessages, response.errorKey);
       }
     });
   };
 
   const getNewAction = () => {
-    const randomLocationNumber = Math.floor(Math.random() * Object.keys(uiText.locations).length) + 1;
-    const randomLocation = uiText.locations[randomLocationNumber];
-    socket.emit('new-action', userData.roomCode, randomLocation, (response) => {
+    const randomLocationNumber = Math.floor(Math.random() * Object.keys(locations).length) + 1;
+
+    socket.emit('new-action', userData.roomCode, randomLocationNumber, (response) => {
       if (response.errorKey) {
-        setMessage(getMessage(response.errorKey));
+        getMessage(setMessages, response.errorKey);
       }
     });
   };
@@ -58,7 +94,7 @@ const App = () => {
       () => {
         setUserData(initialUserData);
         localStorage.removeItem('userData');
-        setMessage(getMessage('leftGame'));
+        getMessage(setMessages, 'leftGame');
         socket.disconnect();
       }
     );
@@ -66,19 +102,21 @@ const App = () => {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setUserData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    if (name === 'roomCode') {
+      updateUserData({ [name]: value.toUpperCase() });
+    } else {
+      updateUserData({ [name]: value });
+    }
   };
+
 
   const handleGuess = (guessedPlayerName) => {
     socket.emit('make-guess', { roomCode: userData.roomCode, guessedPlayerName },
       (response) => {
         if (response.errorKey) {
-          setMessage(getMessage(response.errorKey));
+          getMessage(setMessages, response.errorKey);
         } else {
-          setMessage(getMessage('guessRegistered'));
+          getMessage(setMessages, 'guessRegistered');
         }
       }
     );
@@ -89,127 +127,111 @@ const App = () => {
     const { name, roomCode } = userData;
 
     if (!name || !roomCode) {
-      setMessage(getMessage('nameAndRoomCodeRequired'));
+      getMessage(setMessages, 'nameAndRoomCodeRequired');
       return;
     }
 
-    socket.emit('join-game', { name, roomCode },
-      (response) => {
-        if (response.errorKey) {
-          setMessage(getMessage(response.errorKey));
-        } else {
-          setUserData((prevData) => ({
-            ...prevData,
-            playing: true,
-            action: response.action || '',
-            players: response.players || [],
-            creator: response.creator || false,
-          }));
-          setMessage(getMessage('joinedGame'));
-        }
+    socket.emit('join-game', { name, roomCode }, (response) => {
+      if (response.errorKey) {
+        getMessage(setMessages, response.errorKey);
+      } else {
+        updateUserData({
+          playing: true,
+          players: response.players || [],
+          creator: response.creator || false,
+        });
+        getMessage(setMessages, 'joinedGame');
       }
-    );
+    });
   };
 
   const resetGame = () => {
     socket.emit('new-game', userData.roomCode, (response) => {
-      if (response.error) {
-        setMessage(response.error);
-      } else {
-        setMessage(getMessage('gameReset'));
+      if (response.errorKey) {
+        getMessage(setMessages, response.errorKey);
       }
     });
   };
 
   useEffect(() => {
-    if (message !== '') {
-      const timer = setTimeout(() => setMessage(), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
-
-  useEffect(() => {
     const savedUserData = localStorage.getItem('userData');
     if (savedUserData) {
       const parsedData = JSON.parse(savedUserData);
-      setUserData((prevData) => ({
-        ...prevData,
+      updateUserData({
         name: parsedData.name,
         roomCode: parsedData.roomCode,
-      }));
+      });
 
       socket.connect();
       socket.emit('rejoin-game', parsedData, (response) => {
-        if (response.error) {
-          setMessage(response.error);
+        if (response.errorKey) {
+          getMessage(setMessages, response.errorKey);
         } else {
-          setUserData((prevData) => ({
-            ...prevData,
+          updateUserData({
             playing: true,
             players: response.players,
             creator: response.creator,
-            action: response.action,
-          }));
+            randomLocationNumber: response.randomLocationNumber
+          });
           setRoundOver(response.roundOver);
-          setMessage('Du har återanslutit till spelet!');
+          getMessage(setMessages, 'reconnected');
         }
       });
     }
   }, []);
 
   useEffect(() => {
-    if (userData && userData.name && userData.roomCode) {
+    if (userData.name && userData.roomCode) {
       localStorage.setItem('userData', JSON.stringify(userData));
     }
   }, [userData]);
 
   useEffect(() => {
     socket.connect();
-    socket.on('new-action', (data) => {
-      setUserData((prevData) => ({
-        ...prevData,
-        players: data.players.map((player) => ({
+
+    socket.on('new-action', (response) => {
+      updateUserData({
+        randomLocationNumber: response.randomLocationNumber,
+        players: response.players.map((player) => ({
           ...player,
-          action: player.action,
+          action: player.spy
+            ? uiText.isSpy
+            : locations[response.randomLocationNumber],
           spy: player.spy || false,
         })),
-      }));
+      });
     });
 
     socket.on('player-joined', (response) => {
-      setUserData((prevData) => ({ ...prevData, players: response.players }));
-      setMessage(getMessage('playerJoined', { name: response.name }));
+      updateUserData({ players: response.players, randomLocationNumber: response.randomLocationNumber });
+      if (userData.name !== response.name) {
+        getMessage(setMessages, 'playerJoined', { name: response.name })
+      };
     });
 
     socket.on('player-left-room', (response) => {
-      setUserData((prevData) => ({ ...prevData, players: response.players }));
-      setMessage(getMessage('playerLeft', { name: response.name }));
+      updateUserData({ players: response.players });
+      getMessage(setMessages, 'playerLeft', { name: response.name });
     });
 
     socket.on('round-started', () => {
-      setMessage(getMessage('roundStarted'));
+      getMessage(setMessages, 'roundStarted');
       setRoundOver(false);
     });
 
     socket.on('round-over', (response) => {
       setRoundOver(true);
-      setUserData((prevData) => ({ ...prevData, players: response.players }));
-      setMessage(getMessage('roundOver'));
+      updateUserData({ players: response.players });
+      getMessage(setMessages, 'roundOver');
     });
 
     socket.on('update-guess', (data) => {
-      setUserData((prevData) => ({
-        ...prevData,
-        players: data.players,
-      }));
+      updateUserData({ players: data.players });
     });
 
     socket.on('game-reset', (data) => {
-      setUserData((prevData) => ({
-        ...prevData,
-        players: data.players,
-      }));
-      setMessage('Spelet har återställts!');
+      updateUserData({ players: data.players });
+      getMessage(setMessages, 'gameReset');
     });
 
     socket.on('connect', () => {
@@ -218,7 +240,7 @@ const App = () => {
 
     socket.on('disconnect', () => {
       setIsConnected(false);
-      setMessage(getMessage('disconnected'));
+      getMessage(setMessages, 'disconnected');
     });
 
     return () => {
@@ -232,14 +254,17 @@ const App = () => {
       socket.off('update-guess');
       socket.off('game-reset');
     };
-  }, [isConnected]);
+  }, [isConnected, language]);
 
   return (
     <div className='container'>
+      <button onClick={toggleLanguage} className='language'>
+        {flag}
+      </button>
       {!userData.playing ? (
         <>
-          <div className='title'>{uiText.ui.title}</div>
-          <div className='description wrapper'>{uiText.ui.welcome}</div>
+          <div className='title'>{uiText.title}</div>
+          <div className='description wrapper'>{uiText.welcome}</div>
           <form onSubmit={handleSubmit} className='login-form wrapper' autoComplete='off'>
             <input
               type='text'
@@ -247,7 +272,7 @@ const App = () => {
               maxLength={10}
               value={userData.name}
               onChange={handleInputChange}
-              placeholder={uiText.ui.namePlaceholder}
+              placeholder={uiText.namePlaceholder}
               required
             />
             <input
@@ -255,15 +280,15 @@ const App = () => {
               name='roomCode'
               value={userData.roomCode}
               onChange={handleInputChange}
-              placeholder={uiText.ui.roomCodePlaceholder}
+              placeholder={uiText.roomCodePlaceholder}
               required
             />
             <div className='game-buttons'>
               <button type='button' onClick={generateRoomCode}>
-                {uiText.ui.generateCodeButton}
+                {uiText.generateCodeButton}
               </button>
               <button type='submit'>
-                {uiText.ui.joinRoomButton}
+                {uiText.joinRoomButton}
               </button>
             </div>
           </form>
@@ -271,37 +296,36 @@ const App = () => {
       ) : (
         <div className='game-view wrapper'>
           <button
-            title={uiText.ui.copyRoomCode}
+            title={uiText.copyRoomCode}
             className='room-code-button'
             onClick={() => {
               navigator.clipboard.writeText(userData.roomCode);
-              setMessage(uiText.ui.roomCodeCopied);
+              getMessage(setMessages, 'roomCodeCopied');
             }}>
-            {`RUMSKOD: ${userData.roomCode}`}
+            {`${uiText.roomCode}: ${userData.roomCode}`}
           </button>
 
           <div>
-            {roundOver && userData.players.some(player => player.action) && (
+            {roundOver && (
               <div className="action-finished wrapper">
                 <h3>
-                  {userData.players.find(player => player.spy).name} {uiText.ui.spyWas}
+                  {userData.players.find((player) => player.spy).name} {uiText.spyWas}
                 </h3>
-                <div>{uiText.ui.locationWas}</div>
+                <div>{`${uiText.locationWas} ${locations[userData.randomLocationNumber]}`}</div>
                 <h3>
-                  {userData.players.find(player => player.name === userData.name).action}
+                  {userData.players.find((player) => player.name === userData.name).action}
                 </h3>
               </div>
             )}
 
-            {!roundOver && userData.players.some(player => player.name === userData.name && player.spy) && (
-              <div className='action wrapper'>
-                {uiText.ui.isSpy}
-              </div>
+            {!roundOver && userData.players.some((player) => player.name === userData.name && player.spy) && (
+              <div className="action wrapper">{uiText.isSpy}</div>
             )}
 
-            {!roundOver && !userData.players.some(player => player.name === userData.name && player.spy) && (
-              <div className='action-pending wrapper'>
-                {userData.players.find(player => player.name === userData.name)?.action || uiText.ui.getReady}
+            {!roundOver && !userData.players.some((player) => player.name === userData.name && player.spy) && (
+              <div className="action-pending wrapper">
+                {userData.players.find((player) => player.name === userData.name)?.action ||
+                  uiText.getReady}
               </div>
             )}
           </div>
@@ -309,9 +333,9 @@ const App = () => {
           <table>
             <thead>
               <tr>
-                <th>{uiText.ui.nameHeader}</th>
-                <th>{uiText.ui.pointsHeader}</th>
-                <th>{uiText.ui.accuseHeader}</th>
+                <th>{uiText.nameHeader}</th>
+                <th>{uiText.pointsHeader}</th>
+                <th>{uiText.accuseHeader}</th>
               </tr>
             </thead>
             <tbody>
@@ -321,11 +345,11 @@ const App = () => {
                   <td>{player.points}</td>
                   <td>
                     {player.name === userData.name && player.spy && (
-                      uiText.ui.youAreSpy
+                      uiText.youAreSpy
                     )}
 
                     {player.name === userData.name && !player.spy && (
-                      uiText.ui.you
+                      uiText.you
                     )}
 
                     {!roundOver && userData.players.some(player => player.name !== userData.name && player.spy) && player.name !== userData.name && (
@@ -334,7 +358,7 @@ const App = () => {
                         onClick={() => handleGuess(player.name)}
                         disabled={roundOver}
                       >
-                        {uiText.ui.accuseSpy}
+                        {uiText.accuseSpy}
                       </button>
                     )}
                   </td>
@@ -347,20 +371,26 @@ const App = () => {
             {userData.creator && (
               <>
                 <button className="boss" onClick={getNewAction}>
-                  {uiText.ui.newRoundButton}
+                  {uiText.newRoundButton}
                 </button>
                 <button className="boss" onClick={resetGame}>
-                  {uiText.ui.newGameButton}
+                  {uiText.newGameButton}
                 </button>
               </>
             )}
             <button onClick={leaveGame}>
-              {uiText.ui.leaveGameButton}
+              {uiText.leaveGameButton}
             </button>
           </div>
         </div>
       )}
-      {message && <div className='message'>{message}</div>}
+      <div className='messages'>
+        {messages.map((msg) => (
+          <div key={msg.id} className='message'>
+            {msg.text}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
