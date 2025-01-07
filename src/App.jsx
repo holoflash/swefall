@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import './styles.css';
 import { generateRandomString } from './utils/generateRandomString';
 import languages from './data/languages.json'
+import Messages from './components/Messages';
 
 const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:4000';
 const socket = io(URL, { autoConnect: false });
@@ -18,9 +19,9 @@ const App = () => {
     creator: false,
   };
 
+  const messagesRef = useRef();
   const [userData, setUserData] = useState(initialUserData);
   const [isConnected, setIsConnected] = useState(socket.connected);
-  const [messages, setMessages] = useState([]);
 
   const defaultLanguage = 'english';
   const [language, setLanguage] = useState(() => {
@@ -42,6 +43,13 @@ const App = () => {
     });
   };
 
+  const updateUserData = (updates) => {
+    setUserData((prevData) => ({
+      ...prevData,
+      ...updates,
+    }));
+  };
+
   useEffect(() => {
     updateUserData({
       randomLocationNumber: userData.randomLocationNumber,
@@ -55,29 +63,6 @@ const App = () => {
     });
   }, [language, locations]);
 
-  const getMessage = (setMessages, key, replacements = {}) => {
-    let newMessage = uiMessages[key] || `Message for key '${key}' not found.`;
-    Object.entries(replacements).forEach(([placeholder, value]) => {
-      newMessage = newMessage.replace(`{${placeholder}}`, value);
-    });
-
-    const messageObject = { id: `${Date.now()}-${Math.random()}`, text: newMessage };
-
-    setMessages((prevMessages) => [...prevMessages, messageObject]);
-
-    setTimeout(() => {
-      setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.id !== messageObject.id)
-      );
-    }, 1500);
-  };
-
-  const updateUserData = (updates) => {
-    setUserData((prevData) => ({
-      ...prevData,
-      ...updates,
-    }));
-  };
 
   useEffect(() => {
     console.log("roundOver:", userData.roundOver, "gameinprogres", userData.gameInProgress);
@@ -89,13 +74,12 @@ const App = () => {
     socket.emit('generate-room-code', { roomCode }, (response) => {
       if (response.success) {
         updateUserData({ roomCode });
-        getMessage(setMessages, 'roomCodeGenerated');
+        messagesRef.current.showMessage('roomCodeGenerated');
       } else {
-        getMessage(setMessages, response.errorKey);
+        messagesRef.current.showMessage(response.errorKey);
       }
     });
   };
-
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -111,20 +95,20 @@ const App = () => {
     const { name, roomCode } = userData;
 
     if (!name || !roomCode) {
-      getMessage(setMessages, 'nameAndRoomCodeRequired');
+      messagesRef.current.showMessage('nameAndRoomCodeRequired');
       return;
     }
 
     socket.emit('join-game', { name, roomCode }, (response) => {
       if (response.errorKey) {
-        getMessage(setMessages, response.errorKey);
+        messagesRef.current.showMessage(response.errorKey);
       } else {
         updateUserData({
           inGame: true,
           players: response.players || [],
           creator: response.creator || false,
         });
-        getMessage(setMessages, 'joinedGame');
+        messagesRef.current.showMessage('joinedGame');
       }
     });
   };
@@ -134,7 +118,7 @@ const App = () => {
 
     socket.emit('new-action', userData.roomCode, randomLocationNumber, (response) => {
       if (response.errorKey) {
-        getMessage(setMessages, response.errorKey);
+        messagesRef.current.showMessage(response.errorKey);
       }
     });
   };
@@ -144,7 +128,7 @@ const App = () => {
       () => {
         setUserData(initialUserData);
         localStorage.removeItem('userData');
-        getMessage(setMessages, 'leftGame');
+        messagesRef.current.showMessage('leftGame');
         socket.disconnect();
       }
     );
@@ -154,9 +138,9 @@ const App = () => {
     socket.emit('make-guess', { roomCode: userData.roomCode, guessedPlayerName },
       (response) => {
         if (response.errorKey) {
-          getMessage(setMessages, response.errorKey);
+          messagesRef.current.showMessage(response.errorKey);
         } else {
-          getMessage(setMessages, 'guessRegistered');
+          messagesRef.current.showMessage('guessRegistered');
         }
       }
     );
@@ -165,7 +149,7 @@ const App = () => {
   const resetGame = () => {
     socket.emit('new-game', userData.roomCode, (response) => {
       if (response.errorKey) {
-        getMessage(setMessages, response.errorKey);
+        messagesRef.current.showMessage(response.errorKey);
       }
     });
   };
@@ -184,7 +168,7 @@ const App = () => {
       socket.connect();
       socket.emit('rejoin-game', parsedData, (response) => {
         if (response.errorKey) {
-          getMessage(setMessages, response.errorKey);
+          messagesRef.current.showMessage(response.errorKey);
         } else {
           updateUserData({
             inGame: true,
@@ -192,7 +176,7 @@ const App = () => {
             creator: response.creator,
             randomLocationNumber: response.randomLocationNumber
           });
-          getMessage(setMessages, 'reconnected');
+          messagesRef.current.showMessage('reconnected');
         }
       });
     }
@@ -229,7 +213,7 @@ const App = () => {
         players: response.players,
       });
       if (userData.name !== response.name) {
-        getMessage(setMessages, 'playerJoined', { name: response.name })
+        messagesRef.current.showMessage('playerJoined', { name: response.name })
       };
     });
 
@@ -239,11 +223,11 @@ const App = () => {
         roundOver: true,
         players: response.players,
       });
-      getMessage(setMessages, 'playerLeft', { name: response.name });
+      messagesRef.current.showMessage('playerLeft', { name: response.name });
     });
 
     socket.on('round-started', () => {
-      getMessage(setMessages, 'roundStarted');
+      messagesRef.current.showMessage('roundStarted');
     });
 
     socket.on('round-over', (response) => {
@@ -251,7 +235,7 @@ const App = () => {
         roundOver: true,
         players: response.players
       });
-      getMessage(setMessages, 'roundOver');
+      messagesRef.current.showMessage('roundOver');
     });
 
     socket.on('update-guess', (response) => {
@@ -264,7 +248,7 @@ const App = () => {
         gameInProgress: false,
         players: response.players
       });
-      getMessage(setMessages, 'gameReset');
+      messagesRef.current.showMessage('gameReset');
     });
 
     socket.on('connect', () => {
@@ -273,7 +257,7 @@ const App = () => {
 
     socket.on('disconnect', () => {
       setIsConnected(false);
-      getMessage(setMessages, 'disconnected');
+      messagesRef.current.showMessage('disconnected');
     });
 
     return () => {
@@ -333,7 +317,7 @@ const App = () => {
             className='room-code-button'
             onClick={() => {
               navigator.clipboard.writeText(userData.roomCode);
-              getMessage(setMessages, 'roomCodeCopied');
+              messagesRef.current.showMessage('roomCodeCopied');
             }}>
             {`${uiText.roomCode}: ${userData.roomCode}`}
           </button>
@@ -423,13 +407,7 @@ const App = () => {
         </div>
       )
       }
-      <div className='messages'>
-        {messages.map((msg) => (
-          <div key={msg.id} className='message'>
-            {msg.text}
-          </div>
-        ))}
-      </div>
+      <Messages ref={messagesRef} uiMessages={uiMessages} />
     </div >
   );
 };
