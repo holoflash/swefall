@@ -7,6 +7,7 @@ import Messages from './components/Messages';
 import LoginForm from './components/LoginForm';
 import GameView from './components/GameView';
 import LanguageToggle from './components/LanguageToggle';
+import Instructions from './components/Instructions';
 
 const URL =
     process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:4000';
@@ -269,7 +270,6 @@ const App = () => {
 
     return (
         <div className="container">
-            <LanguageToggle {...{ language, setLanguage }} />
             {!userData.inGame ? (
                 <LoginForm
                     {...{
@@ -294,6 +294,10 @@ const App = () => {
                     }}
                 />
             )}
+            <div className="user-tools">
+                <LanguageToggle {...{ language, setLanguage, uiText }} />
+                <Instructions {...{ uiText }} />
+            </div>
             <Messages ref={messagesRef} uiMessages={uiMessages} />
         </div>
     );

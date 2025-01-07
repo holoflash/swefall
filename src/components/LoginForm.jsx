@@ -42,7 +42,7 @@ const LoginForm = ({
                 />
                 <div className="game-buttons">
                     <button type="button" onClick={generateRoomCode}>
-                        {uiText.generateCodeButton}
+                        {uiText.newRoom}
                     </button>
                     <button type="submit">{uiText.joinRoomButton}</button>
                 </div>

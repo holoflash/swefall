@@ -1,6 +1,6 @@
 {
     "english": {
-        "flag": "🇬🇧",
+        "flag": "EN",
         "locations": {
             "1": "ON THE BEACH",
             "2": "AT THE AIRPORT",
@@ -102,8 +102,8 @@
             "98": "ON CHRISTMAS EVE"
         },
         "uiMessages": {
-            "roomCodeGenerated": "Room code generated successfully!",
-            "roomCodeGenerationFailed": "Failed to generate room code",
+            "roomCodeGenerated": "Room created successfully!",
+            "roomCodeGenerationFailed": "Failed to create room",
             "leftGame": "You left the game",
             "guessRegistered": "Your guess has been registered!",
             "nameAndRoomCodeRequired": "Name and room code are required",
@@ -124,10 +124,47 @@
         },
         "uiText": {
             "title": "swefall",
-            "welcome": "Welcome to SWEFALL! Enter your name, type or generate the room code and click join to start the game.",
+            "instructions": {
+                "header": "How to Play",
+                "howToPlay": [
+                    {
+                        "step": "Joining a Game",
+                        "description": "Enter your name, then either create a new room or enter a room code provided by the host. Click 'JOIN ROOM' to begin."
+                    },
+                    {
+                        "step": "Number of Players",
+                        "description": "The game requires at least three players. The more the merrier!"
+                    },
+                    {
+                        "step": "Starting a Round",
+                        "description": "The host clicks 'NEW ROUND,' which randomly assigns a location and designates one player as the spy. The spy is not informed of the location."
+                    },
+                    {
+                        "step": "Gameplay",
+                        "description": "Players take turns asking each other questions about the location. The goal is for non-spy players to identify the spy, while the spy attempts to conceal their identity. Pay close attention to inconsistencies in other players' answers and ask strategic questions to deduce the spy's identity."
+                    },
+                    {
+                        "step": "Accusations and Voting",
+                        "description": "When you believe you've identified the spy, click the 'SPY!' button next to their name. The spy cannot vote. Once everyone has voted, points are awarded, and the spy and location are revealed."
+                    },
+                    {
+                        "step": "Scoring",
+                        "description": "Players who correctly identify the spy receive one point. The spy receives one point for each incorrect accusation."
+                    },
+                    {
+                        "step": "Starting a New Round",
+                        "description": "The host clicks 'NEW ROUND' to select a new location and assign a new spy, beginning a new round. 'NEW GAME' resets all scores."
+                    },
+                    {
+                        "step": "Something wrong?",
+                        "description": "If locations are not updating, try refreshing your browser. This game is still under development, and you may encounter other issues. Feel free to report any bugs or suggest fixes."
+                    }
+                ]
+            },
+            "welcome": "Welcome to SWEFALL! Enter your name, create a new room, or enter a room code and click on JOIN ROOM to start the game",
             "namePlaceholder": "Enter your name",
             "roomCodePlaceholder": "Enter room code",
-            "generateCodeButton": "GENERATE CODE",
+            "newRoom": "CREATE ROOM",
             "joinRoomButton": "JOIN ROOM",
             "copyRoomCode": "Copy room code to clipboard",
             "isSpy": "You are the SPY",
@@ -142,12 +179,15 @@
             "newRoundButton": "NEW ROUND",
             "newGameButton": "NEW GAME",
             "leaveGameButton": "LEAVE GAME",
+            "closeRoomButton": "CLOSE ROOM",
             "spyWas": "was the spy!",
-            "locationWas": "The location was:"
+            "locationWas": "The location was:",
+            "changeLanguage": "Language:",
+            "help": "HOW TO PLAY"
         }
     },
     "swedish": {
-        "flag": "🇸🇪",
+        "flag": "SV",
         "locations": {
             "1": "PÅ STRANDEN",
             "2": "PÅ FLYGPLATSEN",
@@ -249,8 +289,8 @@
             "98": "PÅ JULAFTON"
         },
         "uiMessages": {
-            "roomCodeGenerated": "Rumsnyckeln har genererats!",
-            "roomCodeGenerationFailed": "Misslyckades att generera rumsnyckeln",
+            "roomCodeGenerated": "Rummet har skapats!",
+            "roomCodeGenerationFailed": "Misslyckades att skapa rum",
             "leftGame": "Du lämnade spelet",
             "guessRegistered": "Din gissning har registrerats!",
             "nameAndRoomCodeRequired": "Namn och rumsnyckel krävs",
@@ -271,10 +311,47 @@
         },
         "uiText": {
             "title": "swefall",
-            "welcome": "Välkommen till SWEFALL! Ange ditt namn, skriv eller generera rumsnyckeln och klicka på gå med för att starta spelet.",
+            "instructions": {
+                "header": "Hur man spelar",
+                "howToPlay": [
+                    {
+                        "step": "Gå med i ett spel",
+                        "description": "Ange ditt namn och skapa sedan ett nytt rum eller ange en rumskod som tillhandahålls av värden. Klicka på 'GÅ MED I RUM' för att börja."
+                    },
+                    {
+                        "step": "Antal spelare",
+                        "description": "Spelet kräver minst tre spelare. Ju fler desto roligare!"
+                    },
+                    {
+                        "step": "Starta en runda",
+                        "description": "Värden klickar på 'NY RUNDA', vilket slumpmässigt tilldelar en plats och utser en spelare till spion. Spionen informeras inte om platsen."
+                    },
+                    {
+                        "step": "Spelupplägg",
+                        "description": "Spelarna turas om att ställa frågor till varandra om platsen. Målet är för icke-spioner att identifiera spionen, medan spionen försöker dölja sin identitet. Var uppmärksam på inkonsekvenser i andra spelares svar och ställ strategiska frågor för att lista ut spionens identitet."
+                    },
+                    {
+                        "step": "Anklagelser och röstning",
+                        "description": "När du tror att du har identifierat spionen, klicka på knappen 'SPION!' bredvid deras namn. Spionen kan inte rösta. När alla har röstat delas poäng ut och spionen och platsen avslöjas."
+                    },
+                    {
+                        "step": "Poängberäkning",
+                        "description": "Spelare som korrekt identifierar spionen får en poäng. Spionen får en poäng för varje felaktig anklagelse."
+                    },
+                    {
+                        "step": "Starta en ny runda",
+                        "description": "Värden klickar på 'NY RUND' för att välja en ny plats och tilldela en ny spion, vilket startar en ny runda. 'NYTT SPEL' återställer alla poäng."
+                    },
+                    {
+                        "step": "Något fel?",
+                        "description": "Om platserna inte uppdateras, försök att uppdatera din webbläsare. Det här spelet är fortfarande under utveckling och du kan stöta på andra problem. Rapportera gärna eventuella buggar eller föreslå korrigeringar."
+                    }
+                ]
+            },
+            "welcome": "Välkommen till SWEFALL! Ange ditt namn, skapa ett nytt rum eller skriv in rumskod och klicka på GÅ MED I RUMMET för att starta spelet.",
             "namePlaceholder": "Ange ditt namn",
             "roomCodePlaceholder": "Ange rumsnyckeln",
-            "generateCodeButton": "GENERERA KOD",
+            "newRoom": "SKAPA RUM",
             "joinRoomButton": "GÅ MED I RUMMET",
             "copyRoomCode": "Kopiera rumsnyckeln till urklipp",
             "isSpy": "Du är SPIONEN",
@@ -289,8 +366,11 @@
             "newRoundButton": "NY RUNDA",
             "newGameButton": "NYTT SPEL",
             "leaveGameButton": "LÄMNA SPELET",
+            "closeRoomButton": "STÄNG RUMMET",
             "spyWas": "var spionen!",
-            "locationWas": "Platsen var:"
+            "locationWas": "Platsen var:",
+            "changeLanguage": "Språk:",
+            "help": "SÅ HÄR SPELAR DU"
         }
     }
 }

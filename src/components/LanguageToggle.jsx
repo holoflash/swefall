@@ -1,6 +1,6 @@
 import languages from '../data/languages.json';
 
-const LanguageToggle = ({ language, setLanguage }) => {
+const LanguageToggle = ({ language, setLanguage, uiText }) => {
     const { flag } = languages[language] || languages['english'];
 
     const toggleLanguage = () => {
@@ -14,9 +14,12 @@ const LanguageToggle = ({ language, setLanguage }) => {
     };
 
     return (
-        <button onClick={toggleLanguage} className="language">
-            {flag}
-        </button>
+        <div>
+            {uiText.changeLanguage}
+            <button onClick={toggleLanguage} className="language">
+                {flag}
+            </button>
+        </div>
     );
 };
 

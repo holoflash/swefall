@@ -107,7 +107,7 @@ const GameView = ({
             </table>
 
             <div className="game-buttons">
-                {userData.creator && (
+                {userData.creator ? (
                     <>
                         <button className="boss" onClick={getNewAction}>
                             {uiText.newRoundButton}
@@ -115,9 +115,15 @@ const GameView = ({
                         <button className="boss" onClick={resetGame}>
                             {uiText.newGameButton}
                         </button>
+                        <button onClick={leaveGame}>
+                            {uiText.closeRoomButton}
+                        </button>
                     </>
+                ) : (
+                    <button onClick={leaveGame}>
+                        {uiText.leaveGameButton}
+                    </button>
                 )}
-                <button onClick={leaveGame}>{uiText.leaveGameButton}</button>
             </div>
         </div>
     );
