@@ -5,7 +5,8 @@ const Messages = forwardRef(({ uiMessages }, ref) => {
 
     const showMessage = (key, replacements = {}) => {
         const text = Object.entries(replacements).reduce(
-            (msg, [placeholder, value]) => msg.replace(`{${placeholder}}`, value),
+            (msg, [placeholder, value]) =>
+                msg.replace(`{${placeholder}}`, value),
             uiMessages[key]
         );
 

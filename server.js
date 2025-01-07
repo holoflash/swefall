@@ -16,7 +16,6 @@ const PORT = process.env.PORT || 4000;
 const rooms = {};
 
 io.on('connection', (socket) => {
-
     socket.on('generate-room-code', (data, callback) => {
         const { roomCode } = data;
 
@@ -39,7 +38,14 @@ io.on('connection', (socket) => {
             return callback({ errorKey: 'nameTaken' });
         }
 
-        const newPlayer = { name, socketId: socket.id, creator: room.players.length === 0, points: 0, guess: null, spy: false };
+        const newPlayer = {
+            name,
+            socketId: socket.id,
+            creator: room.players.length === 0,
+            points: 0,
+            guess: null,
+            spy: false,
+        };
         room.players.push(newPlayer);
         socket.join(roomCode);
         room.players.forEach((player) => {
@@ -100,7 +106,9 @@ io.on('connection', (socket) => {
             player.guess = null;
         });
 
-        room.players[Math.floor(Math.random() * room.players.length)].spy = true;
+        room.players[
+            Math.floor(Math.random() * room.players.length)
+        ].spy = true;
         room.randomLocationNumber = randomLocationNumber;
 
         io.to(roomCode).emit('new-action', {
@@ -130,7 +138,9 @@ io.on('connection', (socket) => {
             return callback({ errorKey: 'roomDoesNotExist' });
         }
 
-        const player = room.players.find(player => player.socketId === socket.id);
+        const player = room.players.find(
+            (player) => player.socketId === socket.id
+        );
         if (!player) {
             return callback({ errorKey: 'playerNotFound' });
         }
@@ -142,37 +152,33 @@ io.on('connection', (socket) => {
         });
 
         const allGuessed = room.players
-            .filter(player => !player.spy)
-            .every(player => player.guess !== null);
+            .filter((player) => !player.spy)
+            .every((player) => player.guess !== null);
 
         if (allGuessed) {
             let incorrectGuesses = 0;
-            const spy = room.players.find(p => p.spy);
+            const spy = room.players.find((p) => p.spy);
             const spyName = spy?.name;
 
-            room.players.forEach(player => {
+            room.players.forEach((player) => {
                 if (!player.spy && player.guess !== spyName) {
                     incorrectGuesses++;
                 }
             });
-
-            room.players.forEach(player => {
+            room.players.forEach((player) => {
                 if (player.spy && incorrectGuesses > 0) {
                     player.points += incorrectGuesses;
                 }
             });
-
-            room.players.forEach(player => {
+            room.players.forEach((player) => {
                 if (!player.spy && player.guess === spyName) {
                     player.points += 1;
                 }
             });
-
             io.to(roomCode).emit('round-over', {
                 players: room.players,
             });
-
-            room.players.forEach(player => {
+            room.players.forEach((player) => {
                 player.guess = null;
             });
         }
@@ -185,7 +191,7 @@ io.on('connection', (socket) => {
             return callback({ errorKey: 'roomDoesNotExist' });
         }
 
-        room.players.forEach(player => {
+        room.players.forEach((player) => {
             player.points = 0;
             player.action = null;
             player.spy = false;
@@ -200,17 +206,24 @@ io.on('connection', (socket) => {
     socket.on('leave-room', ({ name, roomCode }, callback) => {
         const room = rooms[roomCode];
         if (room) {
-            room.players = room.players.filter((player) => player.name !== name);
+            const leavingPlayer = room.players.find(
+                (player) => player.name === name
+            );
+            room.players = room.players.filter(
+                (player) => player.name !== name
+            );
 
-            room.players.forEach((player) => {
-                player.action = null;
-                player.spy = false;
-                player.guess = null;
+            io.to(roomCode).emit('player-left-room', {
+                name,
+                players: room.players,
+                creator: leavingPlayer?.creator,
             });
-
-            io.to(roomCode).emit('player-left-room', { name, players: room.players });
             socket.leave(roomCode);
-            if (room.players.length === 0) {
+
+            if (leavingPlayer?.creator) {
+                delete rooms[roomCode];
+                io.socketsLeave(roomCode);
+            } else if (!room.players.length) {
                 delete rooms[roomCode];
             }
         }
