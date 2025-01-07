@@ -24,7 +24,7 @@ const Instructions = ({ uiText }) => {
                             {uiText.instructions.howToPlay.map(
                                 (instruction) => (
                                     <div key={instruction.step}>
-                                        <h4>{instruction.step}</h4>
+                                        <h3>{instruction.step}</h3>
                                         <p>{instruction.description}</p>
                                     </div>
                                 )

@@ -325,15 +325,17 @@ input:focus {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--background);
   display: flex;
   justify-content: center;
   z-index: 1;
 }
 
 .dialog {
+  overflow: scroll;
   cursor: pointer;
   padding: 20px;
+  font-size: 0.9rem;
   border-radius: 8px;
   max-width: 600px;
   width: 100%;

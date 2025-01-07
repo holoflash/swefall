@@ -29,7 +29,7 @@
             "25": "AT HOME",
             "26": "ON THE BUS",
             "27": "IN THE SUBWAY",
-            "28": "ON A ISLAND",
+            "28": "ON AN ISLAND",
             "29": "AT THE CAR WASH",
             "30": "AT THE HARBOUR",
             "31": "ON THE SKI SLOPE",
@@ -125,39 +125,39 @@
         "uiText": {
             "title": "swefall",
             "instructions": {
-                "header": "How to Play",
+                "header": "HOW TO PLAY",
                 "howToPlay": [
                     {
-                        "step": "Joining a Game",
-                        "description": "Enter your name, then either create a new room or enter a room code provided by the host. Click 'JOIN ROOM' to begin."
+                        "step": "Create/join room",
+                        "description": "Enter your name, then create a room or enter a room code from the host. Click 'JOIN ROOM' to start."
                     },
                     {
-                        "step": "Number of Players",
-                        "description": "The game requires at least three players. The more the merrier!"
+                        "step": "Number of players",
+                        "description": "The game requires at least three players. The more - the merrier!"
                     },
                     {
-                        "step": "Starting a Round",
-                        "description": "The host clicks 'NEW ROUND,' which randomly assigns a location and designates one player as the spy. The spy is not informed of the location."
+                        "step": "Starting a round",
+                        "description": "The host clicks 'NEW ROUND,' assigning a location and designating one player as the spy. The spy doesn't know the location."
                     },
                     {
-                        "step": "Gameplay",
-                        "description": "Players take turns asking each other questions about the location. The goal is for non-spy players to identify the spy, while the spy attempts to conceal their identity. Pay close attention to inconsistencies in other players' answers and ask strategic questions to deduce the spy's identity."
+                        "step": "How to play?",
+                        "description": "Players take turns asking location-related questions. Non-spies aim to identify the spy, while the spy tries to stay hidden. Watch for inconsistencies and ask strategic questions."
                     },
                     {
-                        "step": "Accusations and Voting",
-                        "description": "When you believe you've identified the spy, click the 'SPY!' button next to their name. The spy cannot vote. Once everyone has voted, points are awarded, and the spy and location are revealed."
+                        "step": "Accusations and voting",
+                        "description": "Click 'SPY!' next to a name to cast your vote. Once everyone has voted (the spy can't vote), points are awarded, and the spy and location are revealed."
                     },
                     {
                         "step": "Scoring",
-                        "description": "Players who correctly identify the spy receive one point. The spy receives one point for each incorrect accusation."
+                        "description": "Correctly identifying the spy earns one point. The spy earns one point per incorrect accusation."
                     },
                     {
-                        "step": "Starting a New Round",
-                        "description": "The host clicks 'NEW ROUND' to select a new location and assign a new spy, beginning a new round. 'NEW GAME' resets all scores."
+                        "step": "Starting a new round",
+                        "description": "The host clicks 'NEW ROUND' to restart with a new location and spy. 'NEW GAME' resets scores."
                     },
                     {
                         "step": "Something wrong?",
-                        "description": "If locations are not updating, try refreshing your browser. This game is still under development, and you may encounter other issues. Feel free to report any bugs or suggest fixes."
+                        "description": "If locations fail to update, refresh your browser. The game is still in development and you may encounter other issues. Feel free to report bugs or suggest fixes."
                     }
                 ]
             },
@@ -247,7 +247,7 @@
             "56": "PÅ TULLEN",
             "57": "I BERGSHYTTAN",
             "58": "I HIMMELEN",
-            "59": "PÅ KRYSSNINGSSKEPPET",
+            "59": "PÅ KRYSSNING",
             "60": "I SOPORNA",
             "61": "I EN SARDINBURK",
             "62": "I SANTAS SÄCK",
@@ -257,7 +257,7 @@
             "66": "I TOALETTEN",
             "67": "I HELVETE",
             "68": "PÅ SEMESTER",
-            "69": "PÅ EN SKATEBOARDRAMPA",
+            "69": "PÅ EN SKATEBOARDRAMP",
             "70": "PÅ CYKELN",
             "71": "I MATBUTIKEN",
             "72": "I EN BLOMKRUKA",
@@ -312,39 +312,39 @@
         "uiText": {
             "title": "swefall",
             "instructions": {
-                "header": "Hur man spelar",
+                "header": "SÅ HÄR SPELAR DU",
                 "howToPlay": [
                     {
-                        "step": "Gå med i ett spel",
-                        "description": "Ange ditt namn och skapa sedan ett nytt rum eller ange en rumskod som tillhandahålls av värden. Klicka på 'GÅ MED I RUM' för att börja."
+                        "step": "Skapa/gå med i ett rum",
+                        "description": "Ange ditt namn, skapa sedan ett rum eller ange en rums-kod från värden. Klicka på 'JOIN ROOM' för att starta."
                     },
                     {
-                        "step": "Antal spelare",
-                        "description": "Spelet kräver minst tre spelare. Ju fler desto roligare!"
+                        "step": "Spelarantal",
+                        "description": "Spelet kräver minst tre spelare. Ju fler, desto roligare!"
                     },
                     {
-                        "step": "Starta en runda",
-                        "description": "Värden klickar på 'NY RUNDA', vilket slumpmässigt tilldelar en plats och utser en spelare till spion. Spionen informeras inte om platsen."
+                        "step": "Starta runda",
+                        "description": "Värden klickar på 'NY RUNDA' för att tilldela en plats och utse en spelare som spion. Spionen vet inte vilken plats som valts."
                     },
                     {
-                        "step": "Spelupplägg",
-                        "description": "Spelarna turas om att ställa frågor till varandra om platsen. Målet är för icke-spioner att identifiera spionen, medan spionen försöker dölja sin identitet. Var uppmärksam på inkonsekvenser i andra spelares svar och ställ strategiska frågor för att lista ut spionens identitet."
+                        "step": "Hur spelar man?",
+                        "description": "Spelarna ställer turvis frågor relaterade till platsen. Icke-spionerna försöker identifiera spionen, medan spionen försöker hålla sig dold. Var uppmärksam på inkonsekvenser och ställ strategiska frågor."
                     },
                     {
-                        "step": "Anklagelser och röstning",
-                        "description": "När du tror att du har identifierat spionen, klicka på knappen 'SPION!' bredvid deras namn. Spionen kan inte rösta. När alla har röstat delas poäng ut och spionen och platsen avslöjas."
+                        "step": "Anklagelse och röstning",
+                        "description": "Klicka på 'SPION!' bredvid ett namn för att rösta. När alla har röstat (spionen får inte rösta), delas poäng ut och spionen samt platsen avslöjas."
                     },
                     {
-                        "step": "Poängberäkning",
-                        "description": "Spelare som korrekt identifierar spionen får en poäng. Spionen får en poäng för varje felaktig anklagelse."
+                        "step": "Poängsättning",
+                        "description": "Att identifiera spionen korrekt ger en poäng. Spionen får en poäng per felaktig anklagelse."
                     },
                     {
-                        "step": "Starta en ny runda",
-                        "description": "Värden klickar på 'NY RUND' för att välja en ny plats och tilldela en ny spion, vilket startar en ny runda. 'NYTT SPEL' återställer alla poäng."
+                        "step": "Starta ny runda",
+                        "description": "Värden klickar på 'NEW ROUND' för att starta om med en ny plats och spion. 'NYTT SPEL' återställer poängen."
                     },
                     {
-                        "step": "Något fel?",
-                        "description": "Om platserna inte uppdateras, försök att uppdatera din webbläsare. Det här spelet är fortfarande under utveckling och du kan stöta på andra problem. Rapportera gärna eventuella buggar eller föreslå korrigeringar."
+                        "step": "Något som är fel?",
+                        "description": "Om platserna inte uppdateras, uppdatera din webbläsare. Spelet är fortfarande under utveckling, och du kan stöta på andra problem. Rapportera gärna buggar eller föreslå förbättringar."
                     }
                 ]
             },
