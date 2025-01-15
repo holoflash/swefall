@@ -2,28 +2,12 @@ import express from 'express';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import path from 'path';
-import https from 'https';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
-
-const pingServer = () => {
-    const url = 'https://swefall.onrender.com/';
-    https.get(url, (res) => {
-        if (res.statusCode === 200) {
-            console.log('Server pinged successfully');
-        } else {
-            console.error(`Ping failed with status code: ${res.statusCode}`);
-        }
-    }).on('error', (error) => {
-        console.error('Error pinging server:', error.message);
-    });
-};
-
-setInterval(pingServer, 16 * 60 * 1000);
 
 app.use(express.static(path.join(__dirname, 'dist')));
 
