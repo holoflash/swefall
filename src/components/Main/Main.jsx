@@ -1,6 +1,6 @@
 import Messages from '../Messages';
 import LoginForm from '../LoginForm';
-import GameView from '../gameView';
+import GameView from '../GameView';
 import LanguageToggle from '../LanguageToggle';
 import Instructions from '../Instructions';
 
