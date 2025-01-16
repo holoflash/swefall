@@ -1,11 +1,9 @@
-import languages from '../data/languages.json';
-
-const LanguageToggle = ({ language, setLanguage, uiText }) => {
-    const { flag } = languages[language] || languages['english'];
+const LanguageToggle = ({ language, textData, setLanguage, uiText }) => {
+    const { flag } = textData[language] || textData['english'];
 
     const toggleLanguage = () => {
         setLanguage((prevLanguage) => {
-            const availableLanguages = Object.keys(languages);
+            const availableLanguages = Object.keys(textData);
             const nextLanguageIndex =
                 (availableLanguages.indexOf(prevLanguage) + 1) %
                 availableLanguages.length;

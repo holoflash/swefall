@@ -149,6 +149,7 @@ io.on('connection', (socket) => {
 
         io.to(roomCode).emit('update-guess', {
             players: room.players,
+            name: player.name
         });
 
         const allGuessed = room.players

@@ -1,14 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import './styles.css';
-import { generateRandomString } from './utils/generateRandomString';
-import languages from './data/languages.json';
-import Messages from './components/Messages';
-import LoginForm from './components/LoginForm';
-import GameView from './components/GameView';
-import LanguageToggle from './components/LanguageToggle';
-import Instructions from './components/Instructions';
-
+import textData from './data/textData.json';
+import Main from './components/Main';
 const URL =
     process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:4000';
 const socket = io(URL, { autoConnect: false });
@@ -45,7 +39,7 @@ const App = () => {
     }, [userData]);
 
     const { uiText, locations, uiMessages } =
-        languages[language] || languages[defaultLanguage];
+        textData[language] || textData[defaultLanguage];
 
     const updateUserData = (updates) => {
         setUserData((prevData) => ({
@@ -66,6 +60,14 @@ const App = () => {
             })),
         });
     }, [language, locations]);
+
+    const generateRandomString = (length) => {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVXYZ0123456789';
+        const charactersLength = characters.length;
+        return Array.from({ length }, () =>
+            characters.charAt(Math.floor(Math.random() * charactersLength))
+        ).join('');
+    };
 
     const generateRoomCode = () => {
         const roomCode = generateRandomString(6);
@@ -236,6 +238,11 @@ const App = () => {
 
         socket.on('update-guess', (response) => {
             updateUserData({ players: response.players });
+            if (userData.name !== response.name) {
+                messagesRef.current.showMessage('playerGuessed', {
+                    name: response.name,
+                });
+            }
         });
 
         socket.on('game-reset', (response) => {
@@ -269,37 +276,25 @@ const App = () => {
     }, [isConnected, userData]);
 
     return (
-        <div className="container">
-            {!userData.inGame ? (
-                <LoginForm
-                    {...{
-                        uiText,
-                        userData,
-                        updateUserData,
-                        handleSubmit,
-                        generateRoomCode,
-                    }}
-                />
-            ) : (
-                <GameView
-                    {...{
-                        uiText,
-                        userData,
-                        locations,
-                        messagesRef,
-                        handleGuess,
-                        getNewAction,
-                        resetGame,
-                        leaveGame,
-                    }}
-                />
-            )}
-            <div className="user-tools">
-                <LanguageToggle {...{ language, setLanguage, uiText }} />
-                <Instructions {...{ uiText }} />
-            </div>
-            <Messages ref={messagesRef} uiMessages={uiMessages} />
-        </div>
+        <Main
+            {...{
+                uiText,
+                userData,
+                updateUserData,
+                handleSubmit,
+                generateRoomCode,
+                locations,
+                messagesRef,
+                handleGuess,
+                getNewAction,
+                resetGame,
+                leaveGame,
+                language,
+                textData,
+                setLanguage,
+                uiMessages,
+            }}
+        />
     );
 };
 
