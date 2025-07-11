@@ -38,4 +38,14 @@
   - **React** and **TypeScript** for dynamic UI.
   - CSS for styling.
 - **Hosting**:
+
   - Hosted on **Render**.
+
+  ## How to run locally
+
+- <code>npm run start</code>
+
+- <code>npm run dev</code>
+
+- Go to <a href="http://localhost:5173">http://localhost:5173</a> on two different devices
+  or two different browsers that have seperate localHost storage.
